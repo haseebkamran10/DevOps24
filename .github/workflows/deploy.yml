@@ -1,0 +1,32 @@
+name: Deploy to Azure VM
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Copy files to VM
+        env:
+          SSH_KEY: ${{ secrets.SSH_KEY }}
+        run: |
+          echo "$SSH_KEY" > ssh_key.pem
+          chmod 600 ssh_key.pem
+          rsync -avz -e "ssh -i ssh_key.pem -o StrictHostKeyChecking=no" . DevOpsDTU24@51.120.6.249:~/DevOps24/
+
+      - name: SSH into VM and restart Docker containers
+        env:
+          SSH_KEY: ${{ secrets.SSH_KEY }}
+        run: |
+          ssh -i ssh_key.pem -o StrictHostKeyChecking=no DevOpsDTU24@51.120.6.249 << EOF
+            cd ~/DevOps24
+            docker-compose down
+            docker-compose up --build -d
+          EOF
