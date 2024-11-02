@@ -56,38 +56,35 @@ const HomePage = () => {
         ref={bannerRef}
         src="home_banner.jpg"
         alt="Home Banner"
-        className="fixed inset-0 w-full h-dvh object-cover transition-transform duration-300 "
+        className="fixed inset-0 w-full h-screen object-cover transition-opacity duration-300"
         style={{ opacity }}
       />
       <div className="relative z-10 flex flex-col items-center justify-center min-h-screen text-white">
         <div className="text-center py-20">
-          <h1 className="text-4xl font-bold">FUCK THE GRINGOS</h1>
-          <p className="mt-4 text-xl">
+          <h1 className="text-4xl md:text-5xl font-bold">Welcome to Our Art Auction</h1>
+          <p className="mt-4 text-lg md:text-xl">
             Discover and bid on exquisite artworks.
           </p>
         </div>
-        <div className="container mx-auto px-10 py-20">
-          <h2 className="text-3xl font-bold mb-6">Featured Artworks</h2>
-          <div
-            className="grid grid-cols-3 gap-6"
-            style={{ justifyContent: "space-evenly" }}
-          >
+
+        <div className="container mx-auto px-5 md:px-10 py-10 md:py-20">
+          <h2 className="text-2xl md:text-3xl font-bold mb-6">Featured Artworks</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {artworks.map((art, index) => (
               <div
                 key={index}
-                className="shadow-lg rounded-lg overflow-hidden"
-                style={{ height: "420px", width: "300px" }}
+                className="shadow-lg rounded-lg overflow-hidden w-full max-w-xs mx-auto"
               >
                 <img
                   src={art.imgSrc}
                   alt={art.name}
-                  className="h-3/4 w-full object-cover"
+                  className="h-60 w-full object-cover"
                 />
-                <div className="p-4 bg-gray-800 h-1/4">
+                <div className="p-4 bg-gray-800">
                   <h3 className="font-bold truncate">{art.name}</h3>
                   <p className="text-sm truncate">{art.artist}</p>
                   <Link to={art.link}>
-                    <button className="mt-1 bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 text-xs rounded">
+                    <button className="mt-2 bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded text-xs">
                       View Details
                     </button>
                   </Link>
@@ -96,28 +93,25 @@ const HomePage = () => {
             ))}
           </div>
         </div>
-        <div className="container mx-auto px-10 py-20">
-          <h2 className="text-3xl font-bold mb-6">Upcoming Auctions</h2>
-          <div
-            className="grid grid-cols-3 gap-6"
-            style={{ justifyContent: "space-evenly" }}
-          >
+
+        <div className="container mx-auto px-5 md:px-10 py-10 md:py-20">
+          <h2 className="text-2xl md:text-3xl font-bold mb-6">Upcoming Auctions</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {auctions.map((auction, index) => (
               <div
                 key={index}
-                className="shadow-lg rounded-lg overflow-hidden"
-                style={{ height: "420px", width: "300px" }}
+                className="shadow-lg rounded-lg overflow-hidden w-full max-w-xs mx-auto"
               >
                 <img
                   src={auction.imgSrc}
                   alt={auction.name}
-                  className="h-3/4 w-full object-cover"
+                  className="h-60 w-full object-cover"
                 />
-                <div className="p-4 bg-gray-800 h-1/4">
+                <div className="p-4 bg-gray-800">
                   <h3 className="font-bold truncate">{auction.name}</h3>
                   <p className="text-sm truncate">{auction.date}</p>
                   <Link to={auction.link}>
-                    <button className="mt-1 bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 text-xs rounded">
+                    <button className="mt-2 bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded text-xs">
                       Auction Details
                     </button>
                   </Link>
@@ -126,8 +120,9 @@ const HomePage = () => {
             ))}
           </div>
         </div>
-        <div className="container mx-auto px-10 py-20">
-          <h2 className="text-3xl font-bold mb-6">Create a New Auction</h2>
+
+        <div className="container mx-auto px-5 md:px-10 py-10 md:py-20">
+          <h2 className="text-2xl md:text-3xl font-bold mb-6">Create a New Auction</h2>
           <CreateAuctionForm />
         </div>
       </div>
