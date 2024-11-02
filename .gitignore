@@ -1,0 +1,38 @@
+#Taken from chat
+# .NET files
+bin/
+obj/
+*.user
+*.suo
+*.vs
+*.vscode
+Migrations/
+
+
+
+# Node modules
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Docker files
+*.log
+*.pid
+*.seed
+
+# Environment variables
+.env
+.env.*.local
+
+# IDEs and editors
+.vscode/
+.idea/
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Build output
+dist/
+Frontend/tsconfig.app.tsbuildinfo
+Frontend/tsconfig.node.tsbuildinfo
