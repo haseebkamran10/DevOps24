@@ -61,7 +61,7 @@ const HomePage = () => {
       />
       <div className="relative z-10 flex flex-col items-center justify-center min-h-screen text-white">
         <div className="text-center py-20">
-          <h1 className="text-4xl font-bold">Welcome to Our Art Auction</h1>
+          <h1 className="text-4xl font-bold">SMESH EVERYBODY</h1>
           <p className="mt-4 text-xl">
             Discover and bid on exquisite artworks.
           </p>
