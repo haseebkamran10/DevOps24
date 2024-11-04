@@ -11,23 +11,21 @@ builder.Services.AddControllers();
 builder.Services.AddDbContext<DatabaseContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-
-
-
-// Configure CORS to allow requests from your frontend
+// Configure CORS to allow requests from all origins
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAllOrigins",
-        builder =>
+        policyBuilder =>
         {
-            builder.AllowAnyOrigin()
-                   .AllowAnyMethod()
-                   .AllowAnyHeader();
+            policyBuilder.AllowAnyOrigin()
+                         .AllowAnyMethod()
+                         .AllowAnyHeader();
         });
 });
 
 var app = builder.Build();
 
+// Run database migrations at startup to ensure the database is up-to-date
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
@@ -35,23 +33,22 @@ using (var scope = app.Services.CreateScope())
 }
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+// Enable Swagger UI for both development and production environments
+app.UseSwagger();
+app.UseSwaggerUI();
 
+// Use HTTPS Redirection (ensure this works with your setup, or remove if not required)
 app.UseHttpsRedirection();
 
-// Use CORS policy
+// Use the CORS policy
 app.UseCors("AllowAllOrigins");
 
 app.UseAuthorization();
 
+// Map controllers to enable API endpoints
 app.MapControllers();
 
-
-
+// Example endpoint for weather forecasting (optional)
 var summaries = new[]
 {
     "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
@@ -74,6 +71,7 @@ app.MapGet("/weatherforecast", () =>
 
 app.Run();
 
+// WeatherForecast record (used in example endpoint)
 record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
 {
     public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
