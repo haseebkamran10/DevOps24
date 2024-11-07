@@ -83,7 +83,7 @@ const NavigationMenu = () => {
         </div>
         <div className="ml-auto flex items-center space-x-4">
           <Avatar>
-            <AvatarImage src="/profile-silluette.jpg" alt="@user" />
+            <AvatarImage src="/batman.png" alt="@user" />
             <AvatarFallback>U</AvatarFallback>
             <Link to="/profile" className="absolute inset-0">
               <span className="sr-only">Go to profile</span>
