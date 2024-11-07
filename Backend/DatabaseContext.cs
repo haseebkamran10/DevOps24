@@ -1,16 +1,13 @@
 using Microsoft.EntityFrameworkCore;
+using DevOps24.Models;
+using DevOps24.Data; // Adjust based on your project structure
 
-public class DatabaseContext : DbContext
+namespace DevOps24.Data
 {
-    public DatabaseContext(DbContextOptions<DatabaseContext> options) : base(options) { }
+    public class DatabaseContext : DbContext
+    {
+        public DatabaseContext(DbContextOptions<DatabaseContext> options) : base(options) { }
 
-    public DbSet<AuctionWare> AuctionWare { get; set; }
-    public DbSet<Bid> Bid { get; set; }
-    public DbSet<Category> Category { get; set; }
-    public DbSet<CategoryJunction> CategoryJunction { get; set; }
-    public DbSet<Customer> Customer { get; set; }
-    public DbSet<Transaction> Transaction { get; set; }
-
-    // Define your DbSets here
-    // public DbSet<MyEntity> MyEntities { get; set; }
+        public DbSet<User> Users { get; set; } 
+    }
 }

@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Mvc;
+/* using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 [ApiController]
@@ -42,4 +42,4 @@ public class AuctionsController : ControllerBase
         return Ok(auctions);
     }
 
-}
+} */
