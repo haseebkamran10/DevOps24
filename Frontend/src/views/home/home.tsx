@@ -1,7 +1,7 @@
 import useScrollEffect from "@/lib/useScrollEffect";
 import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import CreateAuctionForm from "../createAuction";
+
 
 const HomePage = () => {
   const bannerRef = useRef<HTMLImageElement>(null);
@@ -13,19 +13,19 @@ const HomePage = () => {
       name: "Lion Magnifiqué",
       artist: "Marius Picasso",
       imgSrc: "lion-painting.png",
-      link: "/1",
+      link: "/SingleProductPage",
     },
     {
       name: "Sunset Overdrive",
       artist: "Artist B",
       imgSrc: "lion-painting2.jpg",
-      link: "/1",
+      link: "/SingleProductPage",
     },
     {
       name: "Abstract Delight",
       artist: "Artist C",
       imgSrc: "artwork_3.jpg",
-      link: "/1",
+      link: "/SingleProductPage",
     },
   ];
 
@@ -34,19 +34,19 @@ const HomePage = () => {
       name: "Modern Masterpiece",
       date: "Preview on 2024-09-27",
       imgSrc: "artwork_4.jpg",
-      link: "/1",
+      link: "/SingleProductPage",
     },
     {
       name: "Renaissance Revival",
       date: "Preview on 2024-09-28",
       imgSrc: "artwork_5.jpg",
-      link: "/1",
+      link: "/SingleProductPage",
     },
     {
       name: "Classical Expression",
       date: "Preview on 2024-09-29",
       imgSrc: "artwork_6.jpg",
-      link: "/1",
+      link: "/SingleProductPage",
     },
   ];
 
@@ -119,11 +119,6 @@ const HomePage = () => {
               </div>
             ))}
           </div>
-        </div>
-
-        <div className="container mx-auto px-5 md:px-10 py-10 md:py-20">
-          <h2 className="text-2xl md:text-3xl font-bold mb-6">Create a New Auction</h2>
-          <CreateAuctionForm />
         </div>
       </div>
     </>

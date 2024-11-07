@@ -18,7 +18,7 @@ import { VscVerified } from "react-icons/vsc";
 
 const slides = ["lion-painting.png", "lion-painting2.jpg"];
 
-function LionPainting() {
+function SingleProductPage() {
   const [isOverlayOpen, setIsOverlayOpen] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
 
@@ -44,21 +44,19 @@ function LionPainting() {
   return (
     <div className="flex flex-col min-h-screen">
       {/* Content Container */}
-      <div className="flex justify-center items-center flex-grow p-8">
-        <div className="w-4/5 flex justify-between ">
+      <div className="flex flex-col lg:flex-row justify-center items-center flex-grow p-4 lg:p-8">
+        <div className="w-full lg:w-4/5 flex flex-col lg:flex-row justify-between">
           {/* Left Section */}
-          <div className="flex flex-col w-2/5 justify-start max-w-1/2">
-            <div className="relative">
-              <div className="max-w-lg">
-                <Carousel slides={slides} />
-              </div>
+          <div className="w-full lg:w-2/5 flex flex-col items-center lg:items-start">
+            <div className="relative w-full max-w-lg mx-auto lg:mx-0">
+              <Carousel slides={slides} />
             </div>
           </div>
 
           {/* Right Section */}
-          <div className="grid w-1/2 ml-8">
-            {/* Other Content */}
-            <div className="flex justify-between mb-2">
+          <div className="w-full lg:w-1/2 mt-4 lg:mt-0 lg:ml-8 grid gap-4">
+            {/* Date and Action Buttons */}
+            <div className="flex justify-between items-center mb-2 text-center lg:text-left">
               <p className="text-sm text-gray-500">Sun 22 Sep 2024 12:54</p>
               <div className="flex items-center">
                 <button className="mr-4 text-2xl">
@@ -69,13 +67,15 @@ function LionPainting() {
                 </button>
               </div>
             </div>
-            <h1 className="text-2xl font-bold mb-2">Lion Magnifiqué</h1>
-            <p className="text-gray-500 mb-2">
+            <h1 className="text-xl lg:text-2xl font-bold mb-2 text-center lg:text-left">
+              Lion Magnifiqué
+            </h1>
+            <p className="text-gray-500 mb-2 text-center lg:text-left">
               Water color painting in wood frame
             </p>
 
             {/* Price and Time */}
-            <div className="flex justify-between mb-2">
+            <div className="flex justify-between mb-2 text-center lg:text-left">
               <div className="flex items-center">
                 <p className="text-gray-500">Price |</p>
                 <button className="ml-2 underline" onClick={toggleOverlay}>
@@ -84,15 +84,15 @@ function LionPainting() {
               </div>
               <p className="text-gray-500">Ends in</p>
             </div>
-            <div className="flex justify-between mb-2">
+            <div className="flex justify-between mb-2 text-center lg:text-left">
               <p className="text-xl font-bold">$750</p>
               <p className="text-gray-500">3 days 22 hours</p>
             </div>
-            <p className="flex items-center text-gray-500 mb-4">
+            <p className="flex items-center justify-center lg:justify-start text-gray-500 mb-4">
               $764 including buyer protection
               <FaShieldAlt className="ml-2" />
             </p>
-            <button className="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-500 active:bg-blue-700">
+            <button className="bg-indigo-700 text-white py-2 px-4 rounded hover:bg-blue-500 active:bg-indigo-700 w-full lg:w-auto">
               Place a bid
             </button>
 
@@ -119,20 +119,23 @@ function LionPainting() {
 
             {/* Seller Info */}
             <div className="grid mt-4">
-              <div className="flex items-center mb-2">
+              <div className="flex items-center mb-2 justify-center lg:justify-start">
                 <p className="font-bold underline mr-4">Marius Picasso</p>
                 <img
                   src="Marius.jpg"
                   className="w-12 h-12 rounded-full border-black border"
+                  alt="Seller Profile"
                 />
               </div>
-              <p className="text-gray-500 mb-2">Rødovre, Denmark</p>
+              <p className="text-gray-500 mb-2 text-center lg:text-left">
+                Rødovre, Denmark
+              </p>
 
-              <div className="flex items-center mb-2">
+              <div className="flex items-center mb-2 justify-center lg:justify-start">
                 <VscVerified />
                 <p className="ml-2">Verified</p>
               </div>
-              <div className="flex items-center mb-2">
+              <div className="flex items-center mb-2 justify-center lg:justify-start">
                 <MdOutlineStarOutline />
                 <p className="ml-2">44 reviews</p>
               </div>
@@ -152,10 +155,11 @@ function LionPainting() {
           </div>
         </div>
       </div>
+
       {/* Conditional Overlay */}
       {isOverlayOpen && (
-        <div className="fixed top-32 left-2/3 right-0 bottom-0 border border-gray-300 bg-white rounded-lg shadow-lg w-60 max-h-60 overflow-y-auto z-10">
-          <div className="text-center p-4">
+        <div className="fixed top-32 left-1/2 transform -translate-x-1/2 right-0 bottom-0 border border-gray-300 bg-white rounded-lg shadow-lg w-full sm:w-60 max-h-60 overflow-y-auto z-10 p-4">
+          <div className="text-center">
             <button
               className="absolute top-4 right-4 text-xl text-black"
               onClick={toggleOverlay}
@@ -177,4 +181,4 @@ function LionPainting() {
   );
 }
 
-export default LionPainting;
+export default SingleProductPage;
