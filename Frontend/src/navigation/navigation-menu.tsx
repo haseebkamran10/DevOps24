@@ -20,17 +20,11 @@ const NavigationMenu = () => {
 
   const handleScroll = useCallback(() => {
     const currentScrollY = window.scrollY;
-
-    if (currentScrollY < 0) {
-      // Prevent negative scroll values
-      return;
-    }
+    if (currentScrollY < 0) return;
 
     if (currentScrollY > lastScrollY) {
-      // Scrolling down
       setIsVisible(false);
     } else if (currentScrollY < lastScrollY) {
-      // Scrolling up
       setIsVisible(true);
     }
 
@@ -64,7 +58,7 @@ const NavigationMenu = () => {
                 {item.name}
               </Link>
               {item.subItems && (
-                <div className="absolute -left-16 mt-0 w-48 rounded-md text-sm  shadow-lg bg-white ring-1 ring-black ring-opacity-5 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition ease-out duration-200">
+                <div className="absolute -left-16 mt-0 w-48 rounded-md text-sm shadow-lg bg-white ring-1 ring-black ring-opacity-5 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition ease-out duration-200">
                   <div
                     className="py-1"
                     role="menu"
@@ -119,7 +113,11 @@ const NavigationMenu = () => {
               <nav className="flex flex-col space-y-4">
                 {navItems.map((item) => (
                   <React.Fragment key={item.name}>
-                    <Link to={item.href} className="text-lg font-medium">
+                    <Link
+                      to={item.href}
+                      className="text-lg font-medium"
+                      onClick={() => setIsOpen(false)} // Close menu on click
+                    >
                       {item.name}
                     </Link>
                     {item.subItems && (
@@ -129,6 +127,7 @@ const NavigationMenu = () => {
                             key={subItem.name}
                             to={subItem.href}
                             className="text-sm text-gray-600"
+                            onClick={() => setIsOpen(false)} // Close menu on click
                           >
                             {subItem.name}
                           </Link>
