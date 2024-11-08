@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using DevOps24.Models;
-using DevOps24.Data; // Adjust based on your project structure
 
 namespace DevOps24.Data
 {
@@ -8,6 +7,16 @@ namespace DevOps24.Data
     {
         public DatabaseContext(DbContextOptions<DatabaseContext> options) : base(options) { }
 
-        public DbSet<User> Users { get; set; } 
+        public DbSet<User> Users { get; set; }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            // Explicitly map the User entity to the "Users" table (optional)
+            modelBuilder.Entity<User>().ToTable("Users");
+
+            // Configure other entities and relationships here if necessary
+        }
     }
 }
