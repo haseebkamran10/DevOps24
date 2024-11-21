@@ -1,4 +1,5 @@
 import { FormEvent, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 
 const LoginPage = () => {
   const bannerRef = useRef<HTMLImageElement>(null);
@@ -7,6 +8,13 @@ const LoginPage = () => {
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+
+    // Basic validation
+    if (username.trim() === "" || password.trim() === "") {
+      alert("Please fill out both fields.");
+      return;
+    }
+
     console.log("Login with:", username, password);
   };
 
@@ -40,7 +48,7 @@ const LoginPage = () => {
                 id="username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-gray-900"
+                className="mt-1 block w-full px-4 py-2 bg-white border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900"
                 placeholder="Enter your username"
                 required
               />
@@ -57,7 +65,7 @@ const LoginPage = () => {
                 id="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-gray-900"
+                className="mt-1 block w-full px-4 py-2 bg-white border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900"
                 placeholder="Enter your password"
                 required
               />
@@ -94,12 +102,12 @@ const LoginPage = () => {
           </form>
           <p className="mt-6 text-center text-sm text-gray-600">
             Don’t have an account?{" "}
-            <a
-              href="#"
+            <Link
+              to="/signup"
               className="font-medium text-indigo-600 hover:text-indigo-500"
             >
               Sign up
-            </a>
+            </Link>
           </p>
         </div>
       </div>
