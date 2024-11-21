@@ -1,22 +1,13 @@
 using Microsoft.EntityFrameworkCore;
-using DevOps24.Models;
+using Backend.Models;
 
-namespace DevOps24.Data
+namespace Backend.Data
 {
     public class DatabaseContext : DbContext
     {
         public DatabaseContext(DbContextOptions<DatabaseContext> options) : base(options) { }
 
-        public DbSet<User> Users { get; set; }
-
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
-        {
-            base.OnModelCreating(modelBuilder);
-
-            // Explicitly map the User entity to the "Users" table (optional)
-            modelBuilder.Entity<User>().ToTable("Users");
-
-            // Configure other entities and relationships here if necessary
-        }
+        public DbSet<User> Users { get; set; } // Adjust the DbSet if needed
+        // Add other DbSets for your models if needed
     }
 }

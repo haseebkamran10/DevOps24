@@ -1,14 +1,17 @@
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
-using DevOps24.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
-using DevOps24.Models;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using System.Text;
 using Microsoft.OpenApi.Models;
+using Backend.Models; // Namespace for User
+using Backend.Data;   // Namespace for DatabaseContext
+
+
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Add services to the container
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
@@ -40,6 +43,7 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
+// Configure database context
 builder.Services.AddDbContext<DatabaseContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
@@ -60,6 +64,7 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
+// Configure CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAllOrigins",
@@ -71,10 +76,12 @@ builder.Services.AddCors(options =>
         });
 });
 
+// Add password hasher
 builder.Services.AddSingleton<IPasswordHasher<User>, PasswordHasher<User>>();
 
 var app = builder.Build();
 
+// Configure middleware
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -83,10 +90,8 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseCors("AllowAllOrigins");
-
-app.UseAuthentication(); // Use authentication middleware
+app.UseAuthentication();
 app.UseAuthorization();
-
 app.MapControllers();
 
 app.Run();

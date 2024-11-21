@@ -4,13 +4,13 @@ using System.Text;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
-using DevOps24.Models;
-//using DevOps24.Backend.DTOs;  // Corrected namespace for DTOs
+using Backend.Models;       // Correct namespace for User
+using Backend.DTOs;         // Correct namespace for DTOs
+using Backend.Data;         // Correct namespace for DatabaseContext
 using Microsoft.AspNetCore.Identity;
-using DevOps24.Data;
 using Microsoft.EntityFrameworkCore;
 
-namespace DevOps24.Controllers 
+namespace Backend.Controllers 
 {
     [Route("api/[controller]")]
     [ApiController]
@@ -46,7 +46,9 @@ namespace DevOps24.Controllers
                 AddressLine = registerDto.AddressLine,
                 City = registerDto.City,
                 Zip = registerDto.Zip,
-                Country = registerDto.Country
+                Country = registerDto.Country,
+                CreatedAt = DateTime.Now,
+                UpdatedAt = DateTime.Now
             };
 
             user.PasswordHash = _passwordHasher.HashPassword(user, registerDto.Password);
@@ -87,7 +89,7 @@ namespace DevOps24.Controllers
             {
                 new Claim(JwtRegisteredClaimNames.Sub, user.Email),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()), // Ensure correct property
                 new Claim(ClaimTypes.Name, user.Username)
             };
 
