@@ -73,14 +73,16 @@ builder.Services.AddAuthentication(options =>
 // Configure CORS
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAllOrigins",
+    options.AddPolicy("AllowFrontend",
         policy =>
         {
-            policy.AllowAnyOrigin()
+            policy.WithOrigins("http://localhost:5173") // Your frontend URL
+                  .AllowAnyHeader()
                   .AllowAnyMethod()
-                  .AllowAnyHeader();
+                  .AllowCredentials(); // Only include if you are using cookies or credentials
         });
 });
+
 
 // Add password hasher
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>(); // Scoped is preferred
@@ -104,8 +106,11 @@ app.UseExceptionHandler(errorApp =>
     });
 });
 
+
+// Enable CORS
+app.UseCors("AllowFrontend");
+
 app.UseHttpsRedirection();
-app.UseCors("AllowAllOrigins");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

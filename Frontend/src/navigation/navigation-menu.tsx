@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { HashLink } from "react-router-hash-link";
 import { Menu } from "lucide-react";
@@ -8,41 +8,54 @@ import { Sheet, SheetContent, SheetTrigger } from "../components/ui/sheet";
 import navItems from "./navItems";
 
 const NavigationMenu = () => {
+  const [userName, setUserName] = useState<string | null>(null);
+  const [userAvatar, setUserAvatar] = useState<string | null>(null); // Avatar state
   const [isOpen, setIsOpen] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const navigate = useNavigate();
 
-  const handleLoginClick = () => {
-    setIsOpen(false);
-    navigate("/login");
-  };
-
-  const handleScroll = useCallback(() => {
+  // Handle scrolling behavior for the navigation bar
+  const handleScroll = () => {
     const currentScrollY = window.scrollY;
 
-    if (currentScrollY < 0) {
-      // Prevent negative scroll values
-      return;
-    }
+    if (currentScrollY < 0) return;
 
     if (currentScrollY > lastScrollY) {
-      // Scrolling down
-      setIsVisible(false);
+      setIsVisible(false); // Scrolling down
     } else if (currentScrollY < lastScrollY) {
-      // Scrolling up
-      setIsVisible(true);
+      setIsVisible(true); // Scrolling up
     }
 
     setLastScrollY(currentScrollY);
-  }, [lastScrollY]);
+  };
 
+  // Effect to retrieve user information from localStorage and update the state
   useEffect(() => {
+    const storedUserName = localStorage.getItem("userName");
+    const storedUserAvatar = localStorage.getItem("userAvatar"); // Get avatar URL from localStorage
+    setUserName(storedUserName);
+    setUserAvatar(storedUserAvatar);
+
     window.addEventListener("scroll", handleScroll);
     return () => {
       window.removeEventListener("scroll", handleScroll);
     };
-  }, [handleScroll]);
+  }, []);
+
+  const handleLoginClick = () => {
+    navigate("/login");
+  };
+
+  const handleLogout = () => {
+    // Clear localStorage and reset user state
+    localStorage.removeItem("token");
+    localStorage.removeItem("userName");
+    localStorage.removeItem("userAvatar");
+    setUserName(null);
+    setUserAvatar(null);
+    navigate("/");
+  };
 
   return (
     <nav
@@ -54,17 +67,18 @@ const NavigationMenu = () => {
         <Link to="/" className="mr-6 flex items-center space-x-2">
           <span className="text-2xl font-bold">KunstHavn</span>
         </Link>
+
         <div className="hidden md:flex space-x-4">
           {navItems.map((item) => (
             <div key={item.name} className="relative group">
               <Link
                 to={item.href}
-                className=" text-base text-popover-foreground hover:text-gray-900"
+                className="text-base text-popover-foreground hover:text-gray-900"
               >
                 {item.name}
               </Link>
               {item.subItems && (
-                <div className="absolute -left-16 mt-0 w-48 rounded-md text-sm  shadow-lg bg-white ring-1 ring-black ring-opacity-5 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition ease-out duration-200">
+                <div className="absolute -left-16 mt-0 w-48 rounded-md text-sm shadow-lg bg-white ring-1 ring-black ring-opacity-5 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition ease-out duration-200">
                   <div
                     className="py-1"
                     role="menu"
@@ -87,22 +101,30 @@ const NavigationMenu = () => {
             </div>
           ))}
         </div>
+
         <div className="ml-auto flex items-center space-x-4">
-          <Avatar>
-            <AvatarImage src="/profile-silluette.jpg" alt="@user" />
-            <AvatarFallback>U</AvatarFallback>
-            <Link to="/profile" className="absolute inset-0">
-              <span className="sr-only">Go to profile</span>
-            </Link>
-          </Avatar>
-          <Button
-            variant="ghost"
-            className="hidden md:inline-flex"
-            onClick={handleLoginClick}
-          >
-            Log in
-          </Button>
+          {userName ? (
+            <div className="flex items-center space-x-4">
+              <Avatar>
+                {userAvatar ? (
+                  <AvatarImage src={userAvatar} alt={userName} />
+                ) : (
+                  <AvatarFallback>{userName?.charAt(0).toUpperCase()}</AvatarFallback>
+                )}
+              </Avatar>
+              <span className="text-base font-medium">{userName}</span>
+              <Button variant="ghost" onClick={handleLogout}>
+                Log out
+              </Button>
+            </div>
+          ) : (
+            <Button variant="ghost" className="hidden md:inline-flex" onClick={handleLoginClick}>
+              Log in
+            </Button>
+          )}
         </div>
+
+        {/* Mobile menu */}
         <div className="md:hidden ml-4">
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild>
@@ -115,6 +137,7 @@ const NavigationMenu = () => {
                 <span className="sr-only">Toggle menu</span>
               </Button>
             </SheetTrigger>
+
             <SheetContent side="right">
               <nav className="flex flex-col space-y-4">
                 {navItems.map((item) => (
@@ -137,9 +160,15 @@ const NavigationMenu = () => {
                     )}
                   </React.Fragment>
                 ))}
-                <Button variant="ghost" onClick={handleLoginClick}>
-                  Log in
-                </Button>
+                {userName ? (
+                  <Button variant="ghost" onClick={handleLogout}>
+                    Log out
+                  </Button>
+                ) : (
+                  <Button variant="ghost" onClick={handleLoginClick}>
+                    Log in
+                  </Button>
+                )}
               </nav>
             </SheetContent>
           </Sheet>

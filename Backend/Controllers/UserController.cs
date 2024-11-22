@@ -48,7 +48,7 @@ namespace Backend.Controllers
                 Zip = registerDto.Zip,
                 Country = registerDto.Country,
                 CreatedAt = DateTime.UtcNow,
-                 UpdatedAt = DateTime.UtcNow
+                UpdatedAt = DateTime.UtcNow
             };
 
             user.PasswordHash = _passwordHasher.HashPassword(user, registerDto.Password);
@@ -92,8 +92,13 @@ namespace Backend.Controllers
                 new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()), // Ensure correct property
                 new Claim(ClaimTypes.Name, user.Username)
             };
+             var jwtKey = _configuration["Jwt:Key"];
+             if (string.IsNullOrEmpty(jwtKey))
+              {
+                throw new Exception("JWT key is not configured.");
+              }
 
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
             var token = new JwtSecurityToken(

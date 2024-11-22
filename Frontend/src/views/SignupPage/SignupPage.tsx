@@ -14,16 +14,23 @@ const SignupPage = () => {
   const [country, setCountry] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false); // Add loading state
+  const [confirmPassword, setConfirmPassword] = useState("");
+
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-
+  
+    if (password !== confirmPassword) {
+      alert("Passwords do not match.");
+      return;
+    }
+  
     // Basic validation
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       alert("Please enter a valid email address.");
       return;
     }
- 
+  
     const user = {
       firstName,
       lastName,
@@ -34,18 +41,18 @@ const SignupPage = () => {
       zip,
       country,
       password,
+      confirmPassword, // Include confirmPassword
     };
-
-    setIsLoading(true); // Start loading indicator
+  
+    setIsLoading(true);
     try {
-      const response = await registerUser(user); // Call the API
+      const response = await registerUser(user);
       alert(`Registration successful! Welcome, ${response.firstName}.`);
-      // Navigate to the login page after success (if needed)
     } catch (error) {
       console.error(error);
       alert("Failed to register. Please check your details and try again.");
     } finally {
-      setIsLoading(false); // Stop loading indicator
+      setIsLoading(false);
     }
   };
 
@@ -215,6 +222,24 @@ const SignupPage = () => {
                 required
               />
             </div>
+            <div>
+  <label
+    htmlFor="confirmPassword"
+    className="block text-sm font-medium text-gray-700"
+  >
+    Confirm Password
+  </label>
+  <input
+    type="password"
+    id="confirmPassword"
+    value={confirmPassword}
+    onChange={(e) => setConfirmPassword(e.target.value)}
+    className="mt-1 block w-full px-4 py-2 bg-white border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900"
+    placeholder="Confirm your password"
+    required
+  />
+</div>
+
             <button
               type="submit"
               className={`w-full py-3 px-4 border border-transparent rounded-lg shadow-sm text-white font-bold ${

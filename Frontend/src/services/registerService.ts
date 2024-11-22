@@ -10,19 +10,32 @@ interface RegisterUserDto {
   zip: string;
   country: string;
   password: string;
+  confirmPassword: string;
 }
 
-export const registerUser = async (user: RegisterUserDto) => {
+interface RegisterResponse {
+  message: string; // Example: "Registration successful"
+  firstName: string; // Include this if the API returns the user's first name
+  
+}
+
+
+
+export const registerUser = async (user: RegisterUserDto): Promise<RegisterResponse>  => {
   try {
-    const response = await axios.post('http://localhost:5000/api/user/register', user, {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    const response = await axios.post<RegisterResponse>(
+      'http://localhost:5000/api/user/register',
+      user,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
 
     console.log('Registration successful:', response.data);
     return response.data;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   } catch (error: any) {
     if (error.response) {
       console.error('Error registering user:', error.response.data);

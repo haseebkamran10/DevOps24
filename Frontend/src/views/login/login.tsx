@@ -1,23 +1,41 @@
 import { FormEvent, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import { loginUser } from "../../services/loginService"; 
+import { useNavigate } from "react-router-dom";
 
 const LoginPage = () => {
   const bannerRef = useRef<HTMLImageElement>(null);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+   const navigate = useNavigate();
+  
+  console.log('Email:', username);
+  console.log('Password:', password);
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-
-    // Basic validation
+  
     if (username.trim() === "" || password.trim() === "") {
       alert("Please fill out both fields.");
       return;
     }
-
-    console.log("Login with:", username, password);
+  
+    try {
+      const response = await loginUser({ email: username, password });
+      console.log("Login successful:", response);
+  
+      // Store the token and user's name in localStorage
+      localStorage.setItem("token", response.token);
+      localStorage.setItem("userName", response.name);
+  
+      // Redirect to the homepage
+      navigate("/");
+    } catch (err: any) {
+      setError(err.response?.data || "An error occurred during login.");
+    }
   };
-
+  
   return (
     <>
       <img
@@ -41,7 +59,7 @@ const LoginPage = () => {
                 htmlFor="username"
                 className="block text-sm font-medium text-gray-700"
               >
-                Username
+                Email
               </label>
               <input
                 type="text"
@@ -49,7 +67,7 @@ const LoginPage = () => {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 className="mt-1 block w-full px-4 py-2 bg-white border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900"
-                placeholder="Enter your username"
+                placeholder="Enter your email"
                 required
               />
             </div>
@@ -93,6 +111,9 @@ const LoginPage = () => {
                 </a>
               </div>
             </div>
+            {error && (
+              <p className="text-red-500 text-sm text-center">{error}</p>
+            )}
             <button
               type="submit"
               className="w-full py-3 px-4 border border-transparent rounded-lg shadow-sm text-white font-bold bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all"

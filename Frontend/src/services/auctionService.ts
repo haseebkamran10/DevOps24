@@ -1,4 +1,3 @@
-// Frontend/src/services/auctionService.js
 import axios from "axios";
 
 export interface Auction {

@@ -1,11 +1,4 @@
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel";
-
+import React, { useEffect, useState } from "react";
 import {
   Card,
   CardContent,
@@ -14,36 +7,61 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-
 import { Button } from "@/components/ui/button";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
+import { Link } from "react-router-dom";
 
 import art1 from "@/assets/art_placeholder1.webp";
 import art2 from "@/assets/art_placeholder2.jpg";
 import art3 from "@/assets/art_placeholder3.png";
-import { Link } from "react-router-dom";
 
-function ProfileOverview() {
+const ProfileOverview = () => {
+  const [userDetails, setUserDetails] = useState({
+    name: "Guest",
+    email: "guest@example.com",
+    phone: "+00 00000000",
+  });
+
+  useEffect(() => {
+    const storedName = localStorage.getItem("userName") || "Guest";
+    const storedEmail = localStorage.getItem("email") || "guest@example.com";
+    const storedPhone = localStorage.getItem("phone") || "+00 00000000";
+
+    setUserDetails({
+      name: storedName,
+      email: storedEmail,
+      phone: storedPhone,
+    });
+  }, []);
+
   return (
     <>
+      {/* User Info Section */}
       <Card>
         <CardHeader>
-          <CardTitle>John Doe</CardTitle>
-          <CardDescription>johndoe@mail.com</CardDescription>
-          <CardDescription>+45 12345678</CardDescription>
+          <CardTitle>{userDetails.name}</CardTitle>
+          <CardDescription>{userDetails.email}</CardDescription>
+          <CardDescription>{userDetails.phone}</CardDescription>
         </CardHeader>
         <CardContent>
           <Button className="m-2" type="submit">
-            Favorited auctions
+            Favorited Auctions
           </Button>
           <Button className="m-2" type="submit">
-            My items
+            My Items
           </Button>
           <Button className="m-2" type="submit">
-            Profile settings
+            Profile Settings
           </Button>
           <Link to="/new-auction">
             <Button className="m-2" type="submit">
-              New auction
+              New Auction
             </Button>
           </Link>
         </CardContent>
@@ -51,11 +69,13 @@ function ProfileOverview() {
       </Card>
 
       <hr className="rounded"></hr>
+
+      {/* User's Auctions Section */}
       <Card>
         <CardHeader>
-          <CardTitle>Current auctions you lead</CardTitle>
+          <CardTitle>Current Auctions You Lead</CardTitle>
           <CardDescription>
-            We will notify you if you are outbid
+            We will notify you if you are outbid.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -91,6 +111,6 @@ function ProfileOverview() {
       </Card>
     </>
   );
-}
+};
 
 export default ProfileOverview;
