@@ -47,8 +47,8 @@ namespace Backend.Controllers
                 City = registerDto.City,
                 Zip = registerDto.Zip,
                 Country = registerDto.Country,
-                CreatedAt = DateTime.Now,
-                UpdatedAt = DateTime.Now
+                CreatedAt = DateTime.UtcNow,
+                 UpdatedAt = DateTime.UtcNow
             };
 
             user.PasswordHash = _passwordHasher.HashPassword(user, registerDto.Password);
