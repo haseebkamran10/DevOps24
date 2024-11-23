@@ -43,8 +43,10 @@ builder.Services.AddSwaggerGen(c =>
 
 // Configure database context
 builder.Services.AddDbContext<DatabaseContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
-           .LogTo(Console.WriteLine, Microsoft.Extensions.Logging.LogLevel.Information));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"), 
+        npgsqlOptions => npgsqlOptions.CommandTimeout(60)) // Set to 60 seconds
+        .LogTo(Console.WriteLine, Microsoft.Extensions.Logging.LogLevel.Information));
+
 
 
 // Configure JWT Authentication

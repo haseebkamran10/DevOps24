@@ -3,9 +3,13 @@ using Backend.Models;
 
 namespace Backend.Data
 {
-    public class DatabaseContext(DbContextOptions<DatabaseContext> options) : DbContext(options)
+    public class DatabaseContext : DbContext
     {
-        public required DbSet<User> Users { get; set; }
+        public DbSet<User> Users { get; set; } // Remove 'required'
+
+        public DatabaseContext(DbContextOptions<DatabaseContext> options) : base(options)
+        {
+        }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

@@ -4,13 +4,14 @@ using System.Text;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
-using Backend.Models;       // Correct namespace for User
-using Backend.DTOs;         // Correct namespace for DTOs
-using Backend.Data;         // Correct namespace for DatabaseContext
+using Backend.Models;
+using Backend.DTOs;
+using Backend.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using System;
 
-namespace Backend.Controllers 
+namespace Backend.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
@@ -19,45 +20,67 @@ namespace Backend.Controllers
         private readonly DatabaseContext _context;
         private readonly IConfiguration _configuration;
         private readonly IPasswordHasher<User> _passwordHasher;
+        private readonly ILogger<UserController> _logger;
 
-        public UserController(DatabaseContext context, IConfiguration configuration, IPasswordHasher<User> passwordHasher)
+        public UserController(DatabaseContext context, IConfiguration configuration, IPasswordHasher<User> passwordHasher, ILogger<UserController> logger)
         {
             _context = context;
             _configuration = configuration;
             _passwordHasher = passwordHasher;
+            _logger = logger;
         }
 
         // Register a new user
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterUserDto registerDto)
         {
-            if (await _context.Users.AnyAsync(u => u.Email == registerDto.Email))
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
             {
-                return BadRequest("User with this email already exists.");
+                if (await _context.Users.AnyAsync(u => u.Email == registerDto.Email))
+                {
+                    _logger.LogWarning("Registration failed: User with email {Email} already exists.", registerDto.Email);
+                    return BadRequest("User with this email already exists.");
+                }
+
+                var user = new User
+                {
+                    FirstName = registerDto.FirstName,
+                    LastName = registerDto.LastName,
+                    Username = registerDto.Username,
+                    Email = registerDto.Email,
+                    PhoneNumber = registerDto.PhoneNumber,
+                    AddressLine = registerDto.AddressLine,
+                    City = registerDto.City,
+                    Zip = registerDto.Zip,
+                    Country = registerDto.Country,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                };
+
+                user.PasswordHash = _passwordHasher.HashPassword(user, registerDto.Password);
+
+                _context.Users.Add(user);
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                _logger.LogInformation("User {Email} registered successfully.", registerDto.Email);
+                return Ok("User registered successfully.");
             }
-
-            var user = new User
+            catch (DbUpdateException ex)
             {
-                FirstName = registerDto.FirstName,
-                LastName = registerDto.LastName,
-                Username = $"{registerDto.FirstName}.{registerDto.LastName}", // Generate a username if not provided
-                Email = registerDto.Email,
-                PhoneNumber = registerDto.PhoneNumber,
-                AddressLine = registerDto.AddressLine,
-                City = registerDto.City,
-                Zip = registerDto.Zip,
-                Country = registerDto.Country,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
-            };
-
-            user.PasswordHash = _passwordHasher.HashPassword(user, registerDto.Password);
-
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
-
-            return Ok("User registered successfully.");
+                await transaction.RollbackAsync();
+                _logger.LogError(ex, "Error executing database update for email {Email}: {ErrorMessage}", registerDto.Email, ex.InnerException?.Message);
+                return StatusCode(500, "Database update failed.");
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                _logger.LogError(ex, "Transaction rolled back due to an error for email {Email}.", registerDto.Email);
+                return StatusCode(500, "Error registering the user.");
+            }
         }
+
 
         // Login an existing user
         [HttpPost("login")]

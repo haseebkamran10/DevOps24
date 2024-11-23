@@ -2,42 +2,41 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Backend.DTOs
 {
-   public class RegisterUserDto
-{
-    [Required(ErrorMessage = "First name is required")]
-    [MaxLength(50, ErrorMessage = "First name cannot exceed 50 characters")]
-    public required string FirstName { get; set; }
+    public class RegisterUserDto
+    {
+        [Required]
+        public string FirstName { get; set; }
 
-    [Required(ErrorMessage = "Last name is required")]
-    [MaxLength(50, ErrorMessage = "Last name cannot exceed 50 characters")]
-    public required string LastName { get; set; }
+        [Required]
+        public string LastName { get; set; }
 
-    [Required(ErrorMessage = "Email is required")]
-    [EmailAddress(ErrorMessage = "Invalid email format")]
-    public required string Email { get; set; }
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; }
 
-    [Required(ErrorMessage = "Phone number is required")]
-    [Phone(ErrorMessage = "Invalid phone number format")]
-    public required string PhoneNumber { get; set; }
+        [Required]
+        public string PhoneNumber { get; set; }
 
-    [MaxLength(255, ErrorMessage = "Address cannot exceed 255 characters")]
-    public string? AddressLine { get; set; }
+        [Required]
+        public string Password { get; set; }
 
-    [MaxLength(50, ErrorMessage = "City cannot exceed 50 characters")]
-    public string? City { get; set; }
+        [Required]
+        [Compare("Password", ErrorMessage = "Passwords do not match.")]
+        public string ConfirmPassword { get; set; }
 
-    [MaxLength(20, ErrorMessage = "Zip code cannot exceed 20 characters")]
-    public string? Zip { get; set; }
+        [Required]
+        public string Username { get; set; } // Let users choose their username
 
-    [MaxLength(50, ErrorMessage = "Country cannot exceed 50 characters")]
-    public required string Country { get; set; }
+        [Required]
+        public string AddressLine { get; set; }
 
-    [Required(ErrorMessage = "Password is required")]
-    [MinLength(6, ErrorMessage = "Password must be at least 6 characters")]
-    public required string Password { get; set; }
+        [Required]
+        public string City { get; set; }
 
-    [Compare("Password", ErrorMessage = "Passwords do not match")]
-    public required string ConfirmPassword { get; set; }
-}
+        [Required]
+        public string Zip { get; set; }
 
+        [Required]
+        public string Country { get; set; }
+    }
 }
