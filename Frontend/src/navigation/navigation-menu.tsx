@@ -106,13 +106,11 @@ const NavigationMenu = () => {
         <div className="ml-auto flex items-center space-x-4">
           {userName !== "Guest" ? (
             <div className="flex items-center space-x-4">
-              <Avatar>
+              <Avatar onClick={() => navigate('/profile')} className="cursor-pointer">
                 {userAvatar ? (
                   <AvatarImage src={userAvatar} alt={userName} />
                 ) : (
-                  <AvatarFallback>
-                    {userName.charAt(0).toUpperCase()}
-                  </AvatarFallback>
+                  <AvatarFallback>{userName.charAt(0).toUpperCase()}</AvatarFallback>
                 )}
               </Avatar>
               <span className="text-base font-medium">Welcome, {userName}</span>
