@@ -1,10 +1,8 @@
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
+using System.Collections.Generic;
 
-namespace Backend.Models{
-
-
- public class Auction
+namespace Backend.Models
+{
+    public class Auction
     {
         public int AuctionId { get; set; }
         public int ArtworkId { get; set; }
@@ -14,5 +12,8 @@ namespace Backend.Models{
         public DateTime StartTime { get; set; }
         public DateTime EndTime { get; set; }
         public bool IsClosed { get; set; }
+
+        // Navigation property for related bids
+        public ICollection<Bid>? Bids { get; set; }
     }
 }

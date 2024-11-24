@@ -1,45 +1,83 @@
-/* using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
+using Backend.Data;
+using Backend.Models;
+using Backend.DTOs;
 using Microsoft.EntityFrameworkCore;
 
-[ApiController]
-[Route("api/[controller]")]
-public class AuctionsController : ControllerBase
+namespace Backend.Controllers
 {
-    private readonly DatabaseContext _context;
-
-    public AuctionsController(DatabaseContext context)
+    [Route("api/[controller]")]
+    [ApiController]
+    public class AuctionController : ControllerBase
     {
-        _context = context;
-    }
+        private readonly DatabaseContext _context;
 
-    [HttpPost]
-    public async Task<IActionResult> CreateAuction([FromBody] AuctionWare auctionware)
-    {
-        _context.AuctionWare.Add(auctionware);
-        await _context.SaveChangesAsync();
-        return CreatedAtAction(nameof(GetAuction), new { id = auctionware.ItemId }, auctionware);
-    }
-
-    [HttpGet("{id}")]
-    public async Task<IActionResult> GetAuction(int id)
-    {
-        var auction = await _context.AuctionWare.FindAsync(id);
-        if (auction == null)
+        public AuctionController(DatabaseContext context)
         {
-            return NotFound();
+            _context = context;
         }
-        return Ok(auction);
-    }
 
-    [HttpGet]
-    public async Task<IActionResult> GetAuctions()
-    {
-        var currentDateTime = DateTime.UtcNow;              //aware of timezones and conversion when people submit auctions
-        var auctions = await _context.AuctionWare
-                                     .Where(a => a.AuctionEnd > currentDateTime) // Filter out old auctions
-                                     .OrderBy(a => a.AuctionEnd) // Order by EndDate in ascending order
-                                     .ToListAsync();
-        return Ok(auctions);
-    }
+        // GET: api/auction/{id}
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetAuction(int id)
+        {
+            var auction = await _context.Auctions
+                .Include(a => a.Bids)
+                .FirstOrDefaultAsync(a => a.AuctionId == id);
 
-} */
+            if (auction == null)
+                return NotFound("Auction not found.");
+              // Ensure auction.Bids is not null and get the highest bid amount
+            var highestBid = auction.Bids?.Max(b => b.BidAmount) ?? 0;    
+
+            return Ok(new
+            {
+                auction.AuctionId,
+                auction.ArtworkId,
+                auction.StartingBid,
+                auction.CurrentBid,
+                auction.StartTime,
+                auction.EndTime,
+                auction.IsClosed,
+                HighestBid = highestBid,
+            });
+        }
+
+        // POST: api/auction/bid
+        [HttpPost("bid")]
+        public async Task<IActionResult> PlaceBid([FromBody] PlaceBidDto bidDto)
+        {
+            var auction = await _context.Auctions.FindAsync(bidDto.AuctionId);
+
+            if (auction == null || auction.IsClosed || auction.EndTime < DateTime.UtcNow)
+                return BadRequest("Auction is not active or does not exist.");
+
+            if (bidDto.BidAmount <= auction.CurrentBid)
+                return BadRequest("Bid amount must be higher than the current bid.");
+
+            var bid = new Bid
+            {
+                AuctionId = auction.AuctionId,
+                UserId = 1, // Replace with user ID from authentication
+                BidAmount = bidDto.BidAmount,
+                BidTime = DateTime.UtcNow
+            };
+
+            _context.Bids.Add(bid);
+
+            // Update auction's current bid
+            auction.CurrentBid = bidDto.BidAmount;
+
+            // Check if the secret threshold is met
+            if (bidDto.BidAmount >= auction.SecretThreshold)
+            {
+                auction.IsClosed = true; // Close the auction
+                return Ok(new { Message = "Congratulations! You won the auction!" });
+            }
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new { Message = "Bid placed successfully." });
+        }
+    }
+}
