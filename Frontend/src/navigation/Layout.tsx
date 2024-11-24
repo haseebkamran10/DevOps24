@@ -1,7 +1,7 @@
 import { Outlet } from "react-router-dom";
 import NavigationMenu from "./navigation-menu";
 import Footer from "./footer";
-import { AuthProvider } from "../../contexts/AuthContext";
+import { AuthProvider } from "../contexts/AuthContext";
 
 export const Layout = () => {
   return (

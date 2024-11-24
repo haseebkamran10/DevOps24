@@ -1,4 +1,4 @@
-import  { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getUserData } from "../../services/UserService";
 import {
@@ -18,19 +18,21 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import { useAuth } from "../../../contexts/AuthContext";
+import { useAuth } from "../../contexts/AuthContext";
 import art1 from "@/assets/art_placeholder1.webp";
 import art2 from "@/assets/art_placeholder2.jpg";
 import art3 from "@/assets/art_placeholder3.png";
 
 const ProfileOverview = () => {
-  const [userDetails, setUserDetails] = useState({
-    name: "Guest",
-    email: "guest@example.com",
-    phone: "+00 00000000",
+  const [userDetails, setUserDetails] = useState(() => {
+    // Load user details from localStorage on initial render
+    const savedDetails = localStorage.getItem("userDetails");
+    return savedDetails
+      ? JSON.parse(savedDetails)
+      : { name: "Guest", email: "guest@example.com", phone: "+00 00000000" };
   });
 
-  const { userName, setUserName,triggerForceRender } = useAuth(); // Use AuthContext
+  const { userName, setUserName } = useAuth(); // Use AuthContext
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -48,11 +50,14 @@ const ProfileOverview = () => {
         const userData = await getUserData(parseInt(userId, 10), token);
         const fullName = `${userData.firstName} ${userData.lastName}`;
 
-        setUserDetails({
+        const newDetails = {
           name: fullName,
           email: userData.email,
           phone: userData.phoneNumber || "+00 00000000",
-        });
+        };
+
+        setUserDetails(newDetails);
+        localStorage.setItem("userDetails", JSON.stringify(newDetails)); // Persist data in localStorage
 
         // Update AuthContext to reflect user information globally
         setUserName(fullName);
@@ -62,11 +67,11 @@ const ProfileOverview = () => {
       }
     };
 
-    if (userName !== "Guest") {
-      // Only fetch details if the user is logged in
+    // Only fetch details if user details are not already loaded
+    if (userDetails.name === "Guest") {
       fetchUserDetails();
     }
-  }, [userName, navigate, setUserName,triggerForceRender ]); // Depend on `userName` to re-fetch when it changes
+  }, [userDetails, navigate, setUserName]);
 
   return (
     <>

@@ -5,7 +5,7 @@ import { Menu } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
 import { Sheet, SheetContent, SheetTrigger } from "../components/ui/sheet";
-import { useAuth } from "../../contexts/AuthContext"; // Ensure AuthContext is correctly set up
+import { useAuth } from "../contexts/AuthContext";
 import navItems from "./navItems";
 
 const NavigationMenu = () => {

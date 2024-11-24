@@ -1,7 +1,7 @@
 import { FormEvent, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { loginUser } from "../../services/loginService";
-import { useAuth } from "../../../contexts/AuthContext";
+import { useAuth } from "../../contexts/AuthContext";
 
 const LoginPage = () => {
   const bannerRef = useRef<HTMLImageElement>(null);
