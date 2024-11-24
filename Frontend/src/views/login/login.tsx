@@ -1,7 +1,6 @@
 import { FormEvent, useRef, useState } from "react";
-import { Link } from "react-router-dom";
-import { loginUser } from "../../services/loginService"; 
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { loginUser } from "../../services/loginService";
 import { useAuth } from "../../../contexts/AuthContext";
 
 const LoginPage = () => {
@@ -10,10 +9,10 @@ const LoginPage = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const { setUserName, setUserAvatar } = useAuth(); // Use Auth context
-   const navigate = useNavigate();
-  
-  console.log('Email:', username);
-  console.log('Password:', password);
+  const navigate = useNavigate();
+
+  console.log("Email:", username);
+  console.log("Password:", password);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -25,20 +24,32 @@ const LoginPage = () => {
   
     try {
       const response = await loginUser({ email: username, password });
+  
+      if (!response.userId) {
+        console.error("Login response is missing userId. Full response:", response);
+        throw new Error("User ID is missing from the response.");
+      }
+      
       console.log("Login successful:", response);
+  
+      // Update context or application state
       setUserName(response.name);
+      setUserAvatar(null); // Replace with avatar handling if available
   
       // Store the token and user's name in localStorage
       localStorage.setItem("token", response.token);
       localStorage.setItem("userName", response.name);
+      localStorage.setItem("userId", response.userId.toString()); // Ensure userId exists before calling .toString()
   
-      // Redirect to the homepage
+      // Redirect to the profile page
       navigate("/profile");
     } catch (err: any) {
-      setError(err.response?.data || "An error occurred during login.");
+      console.error("Login error:", err.message);
+      setError(err.response?.data?.error || "An error occurred during login.");
     }
   };
   
+
   return (
     <>
       <img

@@ -1,4 +1,6 @@
-import React, { useEffect, useState } from "react";
+import  { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { getUserData } from "../../services/UserService";
 import {
   Card,
   CardContent,
@@ -8,6 +10,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 import {
   Carousel,
   CarouselContent,
@@ -15,8 +18,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import { Link } from "react-router-dom";
-
+import { useAuth } from "../../../contexts/AuthContext";
 import art1 from "@/assets/art_placeholder1.webp";
 import art2 from "@/assets/art_placeholder2.jpg";
 import art3 from "@/assets/art_placeholder3.png";
@@ -28,17 +30,43 @@ const ProfileOverview = () => {
     phone: "+00 00000000",
   });
 
-  useEffect(() => {
-    const storedName = localStorage.getItem("userName") || "Guest";
-    const storedEmail = localStorage.getItem("email") || "guest@example.com";
-    const storedPhone = localStorage.getItem("phone") || "+00 00000000";
+  const { userName, setUserName,triggerForceRender } = useAuth(); // Use AuthContext
+  const navigate = useNavigate();
 
-    setUserDetails({
-      name: storedName,
-      email: storedEmail,
-      phone: storedPhone,
-    });
-  }, []);
+  useEffect(() => {
+    const fetchUserDetails = async () => {
+      const token = localStorage.getItem("token");
+      const userId = localStorage.getItem("userId");
+
+      if (!token || !userId) {
+        alert("You are not logged in. Redirecting to login.");
+        navigate("/login");
+        return;
+      }
+
+      try {
+        const userData = await getUserData(parseInt(userId, 10), token);
+        const fullName = `${userData.firstName} ${userData.lastName}`;
+
+        setUserDetails({
+          name: fullName,
+          email: userData.email,
+          phone: userData.phoneNumber || "+00 00000000",
+        });
+
+        // Update AuthContext to reflect user information globally
+        setUserName(fullName);
+      } catch (error) {
+        console.error("Failed to fetch user data:", error);
+        alert("Unable to fetch user details.");
+      }
+    };
+
+    if (userName !== "Guest") {
+      // Only fetch details if the user is logged in
+      fetchUserDetails();
+    }
+  }, [userName, navigate, setUserName,triggerForceRender ]); // Depend on `userName` to re-fetch when it changes
 
   return (
     <>

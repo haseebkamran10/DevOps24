@@ -5,16 +5,24 @@ import { Menu } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
 import { Sheet, SheetContent, SheetTrigger } from "../components/ui/sheet";
-import { useAuth } from "../../contexts/AuthContext";
+import { useAuth } from "../../contexts/AuthContext"; // Ensure AuthContext is correctly set up
 import navItems from "./navItems";
 
 const NavigationMenu = () => {
-  const { userName, userAvatar, setUserName, setUserAvatar, triggerForceRender  } = useAuth();
+  const {
+    userName: authUserName,
+    userAvatar,
+    setUserName,
+    setUserAvatar,
+  } = useAuth();
+
+  const userName = authUserName || "Guest";
   const [isOpen, setIsOpen] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const navigate = useNavigate();
 
+  // Handle scroll behavior to hide/show the menu
   const handleScroll = () => {
     const currentScrollY = window.scrollY;
 
@@ -38,17 +46,18 @@ const NavigationMenu = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [lastScrollY]);
 
+  // Handle Login button click
   const handleLoginClick = () => {
     navigate("/login");
   };
 
+  // Handle Logout
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("userName");
     localStorage.removeItem("userAvatar");
     setUserName(null);
     setUserAvatar(null);
-    triggerForceRender();
     navigate("/");
   };
 
@@ -63,6 +72,7 @@ const NavigationMenu = () => {
           <span className="text-2xl font-bold">KunstHavn</span>
         </Link>
 
+        {/* Navigation Links */}
         <div className="hidden md:flex space-x-4">
           {navItems.map((item) => (
             <div key={item.name} className="relative group">
@@ -92,32 +102,44 @@ const NavigationMenu = () => {
           ))}
         </div>
 
+        {/* User Section */}
         <div className="ml-auto flex items-center space-x-4">
-          {userName ? (
+          {userName !== "Guest" ? (
             <div className="flex items-center space-x-4">
               <Avatar>
                 {userAvatar ? (
                   <AvatarImage src={userAvatar} alt={userName} />
                 ) : (
-                  <AvatarFallback>{userName.charAt(0).toUpperCase()}</AvatarFallback>
+                  <AvatarFallback>
+                    {userName.charAt(0).toUpperCase()}
+                  </AvatarFallback>
                 )}
               </Avatar>
-              <span className="text-base font-medium">Welcome {userName}</span>
+              <span className="text-base font-medium">Welcome, {userName}</span>
               <Button variant="ghost" onClick={handleLogout}>
                 Log out
               </Button>
             </div>
           ) : (
-            <Button variant="ghost" className="hidden md:inline-flex" onClick={handleLoginClick}>
+            <Button
+              variant="ghost"
+              className="hidden md:inline-flex"
+              onClick={handleLoginClick}
+            >
               Log in
             </Button>
           )}
         </div>
 
+        {/* Mobile Navigation Menu */}
         <div className="md:hidden ml-4">
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" onClick={() => setIsOpen(true)}>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsOpen(true)}
+              >
                 <Menu className="h-5 w-5" />
                 <span className="sr-only">Toggle menu</span>
               </Button>
@@ -141,7 +163,11 @@ const NavigationMenu = () => {
                     {item.subItems && (
                       <div className="ml-4 flex flex-col space-y-2">
                         {item.subItems.map((subItem) => (
-                          <Link key={subItem.name} to={subItem.href} className="text-sm text-gray-600">
+                          <Link
+                            key={subItem.name}
+                            to={subItem.href}
+                            className="text-sm text-gray-600"
+                          >
                             {subItem.name}
                           </Link>
                         ))}
@@ -149,7 +175,7 @@ const NavigationMenu = () => {
                     )}
                   </React.Fragment>
                 ))}
-                {userName ? (
+                {userName !== "Guest" ? (
                   <Button variant="ghost" onClick={handleLogout}>
                     Log out
                   </Button>
