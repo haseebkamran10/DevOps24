@@ -28,50 +28,49 @@ namespace Backend.Controllers
         }
 
         // Register a new user
-       [HttpPost("register")]
-public async Task<IActionResult> Register([FromBody] RegisterUserDto registerDto)
-{
-    try
-    {
-        if (string.IsNullOrWhiteSpace(registerDto.Email) || string.IsNullOrWhiteSpace(registerDto.Password))
+        [HttpPost("register")]
+        public async Task<IActionResult> Register([FromBody] RegisterUserDto registerDto)
         {
-            return BadRequest(new { message = "Email and Password are required." });
+            try
+            {
+                if (string.IsNullOrWhiteSpace(registerDto.Email) || string.IsNullOrWhiteSpace(registerDto.Password))
+                {
+                    return BadRequest(new { message = "Email and Password are required." });
+                }
+
+                if (await _context.Users.AnyAsync(u => u.Email == registerDto.Email))
+                {
+                    return Conflict(new { message = "User with this email already exists." });
+                }
+
+                var user = new User
+                {
+                    FirstName = registerDto.FirstName,
+                    LastName = registerDto.LastName,
+                    Username = $"{registerDto.FirstName}.{registerDto.LastName}".ToLower(),
+                    Email = registerDto.Email,
+                    PhoneNumber = registerDto.PhoneNumber,
+                    AddressLine = registerDto.AddressLine,
+                    City = registerDto.City,
+                    Zip = registerDto.Zip,
+                    Country = registerDto.Country,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                };
+
+                user.PasswordHash = _passwordHasher.HashPassword(user, registerDto.Password);
+
+                _context.Users.Add(user);
+                await _context.SaveChangesAsync();
+
+                return CreatedAtAction(nameof(Register), new { id = user.UserId }, new { firstName = user.FirstName, message = "Registration successful." });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error occurred during registration: {ex.Message}");
+                return StatusCode(500, new { message = "An unexpected error occurred on the server." });
+            }
         }
-
-        if (await _context.Users.AnyAsync(u => u.Email == registerDto.Email))
-        {
-            return Conflict(new { message = "User with this email already exists." });
-        }
-
-        var user = new User
-        {
-            FirstName = registerDto.FirstName,
-            LastName = registerDto.LastName,
-            Username = $"{registerDto.FirstName}.{registerDto.LastName}".ToLower(),
-            Email = registerDto.Email,
-            PhoneNumber = registerDto.PhoneNumber,
-            AddressLine = registerDto.AddressLine,
-            City = registerDto.City,
-            Zip = registerDto.Zip,
-            Country = registerDto.Country,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
-        };
-
-        user.PasswordHash = _passwordHasher.HashPassword(user, registerDto.Password);
-
-        _context.Users.Add(user);
-        await _context.SaveChangesAsync();
-
-        return CreatedAtAction(nameof(Register), new { id = user.UserId }, new { firstName = user.FirstName, message = "Registration successful." });
-    }
-    catch (Exception ex)
-    {
-        // Log the exception for debugging
-        Console.WriteLine($"Error occurred during registration: {ex.Message}");
-        return StatusCode(500, new { message = "An unexpected error occurred on the server." });
-    }
-}
 
         // Login an existing user
         [HttpPost("login")]
@@ -98,7 +97,51 @@ public async Task<IActionResult> Register([FromBody] RegisterUserDto registerDto
 
             // Generate JWT token
             var token = GenerateJwtToken(user);
-            return Ok(new { Token = token });
+            return Ok(new
+            {
+                Token = token,
+                Name = $"{user.FirstName} {user.LastName}",
+                UserId = user.UserId
+            });
+        }
+
+        // Get user details by ID
+        [HttpGet("getUser")]
+        public async Task<IActionResult> GetUser([FromQuery] int userId)
+        {
+            try
+            {
+                var userEntity = await _context.Users
+                    .AsNoTracking()
+                    .SingleOrDefaultAsync(u => u.UserId == userId);
+
+                if (userEntity == null)
+                {
+                    return NotFound(new { message = "User not found." });
+                }
+
+                var userDto = new UserDto
+                {
+                    FirstName = userEntity.FirstName,
+                    LastName = userEntity.LastName,
+                    Username = userEntity.Username,
+                    Email = userEntity.Email,
+                    PhoneNumber = userEntity.PhoneNumber,
+                    AddressLine = userEntity.AddressLine,
+                    City = userEntity.City,
+                    Zip = userEntity.Zip,
+                    Country = userEntity.Country,
+                    CreatedAt = userEntity.CreatedAt,
+                    UpdatedAt = userEntity.UpdatedAt
+                };
+
+                return Ok(userDto);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error occurred while fetching user data: {ex.Message}");
+                return StatusCode(500, new { message = "An unexpected error occurred on the server." });
+            }
         }
 
         // Generate a JWT token for authenticated users
@@ -108,7 +151,7 @@ public async Task<IActionResult> Register([FromBody] RegisterUserDto registerDto
             {
                 new Claim(JwtRegisteredClaimNames.Sub, user.Email),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()), // Ensure correct property
+                new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()), 
                 new Claim(ClaimTypes.Name, user.Username)
             };
 
