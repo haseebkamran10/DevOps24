@@ -5,7 +5,8 @@ namespace Backend.Data
 {
     public class DatabaseContext : DbContext
     {
-        public DbSet<User> Users { get; set; } // Remove 'required'
+        public DbSet<User> Users { get; set; } // Manage users
+        public DbSet<Artwork> Artworks { get; set; } // Manage artworks
 
         public DatabaseContext(DbContextOptions<DatabaseContext> options) : base(options)
         {
@@ -15,9 +16,10 @@ namespace Backend.Data
         {
             base.OnModelCreating(modelBuilder);
 
+            // Configure the User table
             modelBuilder.Entity<User>(entity =>
             {
-                entity.ToTable("users"); // Map to the "users" table
+                entity.ToTable("users");
 
                 entity.Property(e => e.UserId).HasColumnName("user_id");
                 entity.Property(e => e.Username).HasColumnName("username");
@@ -32,6 +34,27 @@ namespace Backend.Data
                 entity.Property(e => e.City).HasColumnName("city");
                 entity.Property(e => e.Zip).HasColumnName("zip_code");
                 entity.Property(e => e.Country).HasColumnName("country");
+            });
+
+            // Configure the Artwork table
+            modelBuilder.Entity<Artwork>(entity =>
+            {
+                entity.ToTable("artworks");
+
+                entity.Property(e => e.ArtworkId).HasColumnName("artwork_id");
+                entity.Property(e => e.Title).HasColumnName("title");
+                entity.Property(e => e.Description).HasColumnName("description");
+                entity.Property(e => e.Artist).HasColumnName("artist");
+                entity.Property(e => e.ImageUrl).HasColumnName("image_url");
+                entity.Property(e => e.CreatedAt).HasColumnName("created_at");
+                entity.Property(e => e.UpdatedAt).HasColumnName("updated_at");
+                entity.Property(e => e.UserId).HasColumnName("user_id");
+
+                // Relationship: each artwork is associated with one user
+                entity.HasOne(d => d.User) // Navigation property in Artwork
+                    .WithMany(p => p.Artworks) // Navigation property in User
+                    .HasForeignKey(d => d.UserId)
+                    .OnDelete(DeleteBehavior.Cascade); // Delete artworks if the user is deleted
             });
         }
     }

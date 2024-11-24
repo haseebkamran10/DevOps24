@@ -44,10 +44,8 @@ builder.Services.AddSwaggerGen(c =>
 // Configure database context
 builder.Services.AddDbContext<DatabaseContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"), 
-        npgsqlOptions => npgsqlOptions.CommandTimeout(60)) // Set to 60 seconds
+        npgsqlOptions => npgsqlOptions.CommandTimeout(60))
         .LogTo(Console.WriteLine, Microsoft.Extensions.Logging.LogLevel.Information));
-
-
 
 // Configure JWT Authentication
 var jwtKey = builder.Configuration["Jwt:Key"];
@@ -68,9 +66,26 @@ builder.Services.AddAuthentication(options =>
         ValidateIssuerSigningKey = true,
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
         ValidateIssuer = false,
-        ValidateAudience = false
+        ValidateAudience = false,
+        ValidateLifetime = true // Ensure token expiration is checked
+    };
+
+    options.Events = new JwtBearerEvents
+    {
+        OnAuthenticationFailed = context =>
+        {
+            context.Response.StatusCode = 401;
+            Console.WriteLine($"Authentication failed: {context.Exception.Message}");
+            return Task.CompletedTask;
+        },
+        OnTokenValidated = context =>
+        {
+            Console.WriteLine($"Token validated for user: {context.Principal.Identity.Name}");
+            return Task.CompletedTask;
+        }
     };
 });
+
 
 // Configure CORS
 builder.Services.AddCors(options =>
@@ -81,10 +96,9 @@ builder.Services.AddCors(options =>
             policy.WithOrigins("http://localhost:5173") // Your frontend URL
                   .AllowAnyHeader()
                   .AllowAnyMethod()
-                  .AllowCredentials(); // Only include if you are using cookies or credentials
+                  .AllowCredentials();
         });
 });
-
 
 // Add password hasher
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>(); // Scoped is preferred
@@ -107,7 +121,6 @@ app.UseExceptionHandler(errorApp =>
         await context.Response.WriteAsync("An unexpected error occurred.");
     });
 });
-
 
 // Enable CORS
 app.UseCors("AllowFrontend");
