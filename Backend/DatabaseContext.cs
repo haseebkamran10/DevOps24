@@ -8,6 +8,7 @@ namespace Backend.Data
         public required DbSet<User> Users { get; set; }
         public required DbSet<Auction> Auctions { get; set; }
         public required DbSet<Bid> Bids { get; set; }
+        public required DbSet<Artwork> Artworks { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -52,6 +53,24 @@ namespace Backend.Data
                 entity.Property(e => e.EndTime).HasColumnName("end_time");
                 entity.Property(e => e.IsClosed).HasColumnName("is_closed");
             });
+             modelBuilder.Entity<Artwork>(entity =>
+            {
+                entity.ToTable("artworks");
+
+                entity.Property(e => e.ArtworkId).HasColumnName("artwork_id");
+                entity.Property(e => e.Title).HasColumnName("title");
+                entity.Property(e => e.Description).HasColumnName("description");
+                entity.Property(e => e.Artist).HasColumnName("artist");
+                entity.Property(e => e.ImageUrl).HasColumnName("image_url");
+                entity.Property(e => e.CreatedAt).HasColumnName("created_at");
+                entity.Property(e => e.UpdatedAt).HasColumnName("updated_at");
+                entity.Property(e => e.UserId).HasColumnName("user_id");
+
+                entity.HasOne(d => d.User)
+                    .WithMany(p => p.Artworks) 
+                    .HasForeignKey(d => d.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
+     });
         }
     }
 }

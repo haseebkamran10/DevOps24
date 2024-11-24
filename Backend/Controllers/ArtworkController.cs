@@ -30,9 +30,10 @@ public async Task<IActionResult> AddArtwork([FromBody] ArtworkDto artworkDto)
 {
     _logger.LogDebug("Received add artwork request with title: {Title}", artworkDto.Title);
 
-    if (!User.Identity.IsAuthenticated)
+    // Ensure User.Identity is not null
+    if (User?.Identity == null || !User.Identity.IsAuthenticated)
     {
-        _logger.LogWarning("Unauthorized attempt to add artwork.");
+        _logger.LogWarning("Unauthorized attempt to add artwork. User.Identity is null or unauthenticated.");
         return Unauthorized("You must be logged in to post artwork.");
     }
 
@@ -45,7 +46,12 @@ public async Task<IActionResult> AddArtwork([FromBody] ArtworkDto artworkDto)
             return Unauthorized("Token is invalid or expired.");
         }
 
-        int userId = int.Parse(userIdClaim);
+        if (!int.TryParse(userIdClaim, out int userId))
+        {
+            _logger.LogWarning("Invalid user ID claim format in token.");
+            return Unauthorized("Invalid user ID claim.");
+        }
+
         _logger.LogDebug("Adding artwork for user ID: {UserId}", userId);
 
         var artwork = new Artwork
