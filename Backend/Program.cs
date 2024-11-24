@@ -46,7 +46,6 @@ builder.Services.AddDbContext<DatabaseContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
            .LogTo(Console.WriteLine, Microsoft.Extensions.Logging.LogLevel.Information));
 
-
 // Configure JWT Authentication
 var jwtKey = builder.Configuration["Jwt:Key"];
 if (string.IsNullOrEmpty(jwtKey))
@@ -85,6 +84,21 @@ builder.Services.AddCors(options =>
 // Add password hasher
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>(); // Scoped is preferred
 
+// Add HttpClient for Supabase API
+builder.Services.AddHttpClient("SupabaseClient", client =>
+{
+    var supabaseUrl = builder.Configuration["Supabase:Url"];
+    var supabaseApiKey = builder.Configuration["Supabase:ApiKey"];
+
+    if (string.IsNullOrEmpty(supabaseUrl) || string.IsNullOrEmpty(supabaseApiKey))
+    {
+        throw new Exception("Supabase configuration is missing in appsettings.json or environment variables.");
+    }
+
+    client.BaseAddress = new Uri(supabaseUrl);
+    client.DefaultRequestHeaders.Add("apikey", supabaseApiKey);
+});
+
 var app = builder.Build();
 
 // Configure middleware
@@ -102,6 +116,30 @@ app.UseExceptionHandler(errorApp =>
         context.Response.ContentType = "application/json";
         await context.Response.WriteAsync("An unexpected error occurred.");
     });
+});
+
+// Log incoming requests for debugging
+app.Use(async (context, next) =>
+{
+    var path = context.Request.Path;
+
+    // Exclude login and register routes from Authorization header check
+    if (path.StartsWithSegments("/api/user/login") || path.StartsWithSegments("/api/user/register"))
+    {
+        await next.Invoke();
+        return;
+    }
+
+    // For all other routes, check Authorization header
+    if (!context.Request.Headers.ContainsKey("Authorization"))
+    {
+        Console.WriteLine("No Authorization header found.");
+        context.Response.StatusCode = 401; // Unauthorized
+        await context.Response.WriteAsync("No Authorization header found.");
+        return;
+    }
+
+    await next.Invoke();
 });
 
 

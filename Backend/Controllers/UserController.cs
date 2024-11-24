@@ -1,14 +1,13 @@
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
 using Microsoft.AspNetCore.Mvc;
+using System.Net.Http;
+using System.Text.Json;
+using System.Text;
+using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
-using Microsoft.IdentityModel.Tokens;
-using Backend.Models;       // Correct namespace for User model
-using Backend.DTOs;         // Correct namespace for DTOs
-using Backend.Data;         // Correct namespace for DatabaseContext
+using Backend.DTOs;
+using Backend.Data;
+using Backend.Models;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 
 namespace Backend.Controllers
 {
@@ -16,163 +15,113 @@ namespace Backend.Controllers
     [ApiController]
     public class UserController : ControllerBase
     {
-        private readonly DatabaseContext _context;
         private readonly IConfiguration _configuration;
+        private readonly DatabaseContext _context;
+        private readonly HttpClient _httpClient;
         private readonly IPasswordHasher<User> _passwordHasher;
 
-        public UserController(DatabaseContext context, IConfiguration configuration, IPasswordHasher<User> passwordHasher)
+        public UserController(IConfiguration configuration, DatabaseContext context, IPasswordHasher<User> passwordHasher)
         {
-            _context = context;
             _configuration = configuration;
+            _context = context;
             _passwordHasher = passwordHasher;
+
+            var supabaseUrl = _configuration["Supabase:Url"];
+            if (string.IsNullOrEmpty(supabaseUrl))
+            {
+                throw new Exception("Supabase:Url is not configured. Please check appsettings.json or environment variables.");
+            }
+
+            _httpClient = new HttpClient
+            {
+                BaseAddress = new Uri(supabaseUrl)
+            };
+            _httpClient.DefaultRequestHeaders.Add("apikey", _configuration["Supabase:ApiKey"] ?? throw new Exception("Supabase:ApiKey is not configured."));
         }
 
-        // Register a new user
+        // Register a new user using Supabase
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterUserDto registerDto)
         {
-            try
+            var payload = new
             {
-                if (string.IsNullOrWhiteSpace(registerDto.Email) || string.IsNullOrWhiteSpace(registerDto.Password))
+                email = registerDto.Email,
+                password = registerDto.Password,
+                options = new
                 {
-                    return BadRequest(new { message = "Email and Password are required." });
+                    data = new
+                    {
+                        firstName = registerDto.FirstName,
+                        lastName = registerDto.LastName,
+                        phoneNumber = registerDto.PhoneNumber,
+                        addressLine = registerDto.AddressLine,
+                        city = registerDto.City,
+                        zip = registerDto.Zip,
+                        country = registerDto.Country
+                    }
                 }
+            };
 
-                if (await _context.Users.AnyAsync(u => u.Email == registerDto.Email))
-                {
-                    return Conflict(new { message = "User with this email already exists." });
-                }
+            var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
+            var response = await _httpClient.PostAsync("/auth/v1/signup", content);
 
+            if (response.IsSuccessStatusCode)
+            {
+                // Save the user data in your database
                 var user = new User
                 {
                     FirstName = registerDto.FirstName,
                     LastName = registerDto.LastName,
-                    Username = $"{registerDto.FirstName}.{registerDto.LastName}".ToLower(),
+                    Username = registerDto.Username,
                     Email = registerDto.Email,
                     PhoneNumber = registerDto.PhoneNumber,
                     AddressLine = registerDto.AddressLine,
                     City = registerDto.City,
                     Zip = registerDto.Zip,
                     Country = registerDto.Country,
+                    PasswordHash = _passwordHasher.HashPassword(null, registerDto.Password), // Hash the password
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow
                 };
 
-                user.PasswordHash = _passwordHasher.HashPassword(user, registerDto.Password);
-
                 _context.Users.Add(user);
                 await _context.SaveChangesAsync();
 
-                return CreatedAtAction(nameof(Register), new { id = user.UserId }, new { firstName = user.FirstName, message = "Registration successful." });
+                return Ok(new { message = "Registration successful!" });
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error occurred during registration: {ex.Message}");
-                return StatusCode(500, new { message = "An unexpected error occurred on the server." });
-            }
+
+            var errorResponse = await response.Content.ReadAsStringAsync();
+            return BadRequest(new { message = "Registration failed.", details = errorResponse });
         }
 
-        // Login an existing user
-        [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginUserDto loginDto)
-        {
-            if (string.IsNullOrWhiteSpace(loginDto.Email) || string.IsNullOrWhiteSpace(loginDto.Password))
-            {
-                return BadRequest(new { message = "Email and Password are required." });
-            }
+        // Login an existing user using Supabase
+       [HttpPost("login")]
+public async Task<IActionResult> Login([FromBody] LoginUserDto loginDto)
+{
+    // Log incoming headers to check if Authorization is being sent
+    foreach (var header in Request.Headers)
+    {
+        Console.WriteLine($"Header: {header.Key} = {header.Value}");
+    }
 
-            var user = await _context.Users.SingleOrDefaultAsync(u => u.Email == loginDto.Email);
+    var payload = new
+    {
+        email = loginDto.Email,
+        password = loginDto.Password
+    };
 
-            if (user == null)
-            {
-                return Unauthorized(new { message = "Invalid email or password." });
-            }
+    var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
+    var response = await _httpClient.PostAsync("/auth/v1/token?grant_type=password", content);
 
-            var result = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, loginDto.Password);
+    if (response.IsSuccessStatusCode)
+    {
+        var responseBody = await response.Content.ReadAsStringAsync();
+        return Ok(JsonSerializer.Deserialize<object>(responseBody)); // Includes token and user details
+    }
 
-            if (result == PasswordVerificationResult.Failed)
-            {
-                return Unauthorized(new { message = "Invalid email or password." });
-            }
+    var errorResponse = await response.Content.ReadAsStringAsync();
+    return Unauthorized(new { message = "Login failed.", details = errorResponse });
+}
 
-            // Generate JWT token
-            var token = GenerateJwtToken(user);
-            return Ok(new
-            {
-                Token = token,
-                Name = $"{user.FirstName} {user.LastName}",
-                UserId = user.UserId
-            });
-        }
-
-        // Get user details by ID
-        [HttpGet("getUser")]
-        public async Task<IActionResult> GetUser([FromQuery] int userId)
-        {
-            try
-            {
-                var userEntity = await _context.Users
-                    .AsNoTracking()
-                    .SingleOrDefaultAsync(u => u.UserId == userId);
-
-                if (userEntity == null)
-                {
-                    return NotFound(new { message = "User not found." });
-                }
-
-                var userDto = new UserDto
-                {
-                    FirstName = userEntity.FirstName,
-                    LastName = userEntity.LastName,
-                    Username = userEntity.Username,
-                    Email = userEntity.Email,
-                    PhoneNumber = userEntity.PhoneNumber,
-                    AddressLine = userEntity.AddressLine,
-                    City = userEntity.City,
-                    Zip = userEntity.Zip,
-                    Country = userEntity.Country,
-                    CreatedAt = userEntity.CreatedAt,
-                    UpdatedAt = userEntity.UpdatedAt
-                };
-
-                return Ok(userDto);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error occurred while fetching user data: {ex.Message}");
-                return StatusCode(500, new { message = "An unexpected error occurred on the server." });
-            }
-        }
-
-        // Generate a JWT token for authenticated users
-        private string GenerateJwtToken(User user)
-        {
-            var claims = new[]
-            {
-                new Claim(JwtRegisteredClaimNames.Sub, user.Email),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()), 
-                new Claim(ClaimTypes.Name, user.Username)
-            };
-
-            var jwtKey = _configuration["Jwt:Key"];
-            if (string.IsNullOrEmpty(jwtKey))
-            {
-                throw new Exception("JWT key is not configured.");
-            }
-
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-            var token = new JwtSecurityToken(
-                issuer: _configuration["Jwt:Issuer"],
-                audience: _configuration["Jwt:Issuer"],
-                claims: claims,
-                expires: DateTime.Now.AddDays(1),
-                signingCredentials: creds
-            );
-
-            return new JwtSecurityTokenHandler().WriteToken(token);
-        }
     }
 }
