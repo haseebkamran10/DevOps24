@@ -13,7 +13,7 @@ interface LoginResponse {
 export const loginUser = async (credentials: LoginUserDto): Promise<LoginResponse> => {
   try {
     const response = await axios.post<LoginResponse>(
-      'http://localhost:5000/api/User/login',
+      'https://localhost:5001/api/User/login',
       credentials,
       {
         headers: {
