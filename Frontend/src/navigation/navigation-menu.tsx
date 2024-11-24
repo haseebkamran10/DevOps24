@@ -1,21 +1,20 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { HashLink } from "react-router-hash-link";
 import { Menu } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
 import { Sheet, SheetContent, SheetTrigger } from "../components/ui/sheet";
+import { useAuth } from "../../contexts/AuthContext";
 import navItems from "./navItems";
 
 const NavigationMenu = () => {
-  const [userName, setUserName] = useState<string | null>(null);
-  const [userAvatar, setUserAvatar] = useState<string | null>(null); // Avatar state
+  const { userName, userAvatar, setUserName, setUserAvatar, triggerForceRender  } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const navigate = useNavigate();
 
-  // Handle scrolling behavior for the navigation bar
   const handleScroll = () => {
     const currentScrollY = window.scrollY;
 
@@ -30,30 +29,26 @@ const NavigationMenu = () => {
     setLastScrollY(currentScrollY);
   };
 
-  // Effect to retrieve user information from localStorage and update the state
   useEffect(() => {
-    const storedUserName = localStorage.getItem("userName");
-    const storedUserAvatar = localStorage.getItem("userAvatar"); // Get avatar URL from localStorage
-    setUserName(storedUserName);
-    setUserAvatar(storedUserAvatar);
-
-    window.addEventListener("scroll", handleScroll);
-    return () => {
+    const debounceScroll = () => {
       window.removeEventListener("scroll", handleScroll);
+      window.addEventListener("scroll", handleScroll);
     };
-  }, []);
+    debounceScroll();
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [lastScrollY]);
 
   const handleLoginClick = () => {
     navigate("/login");
   };
 
   const handleLogout = () => {
-    // Clear localStorage and reset user state
     localStorage.removeItem("token");
     localStorage.removeItem("userName");
     localStorage.removeItem("userAvatar");
     setUserName(null);
     setUserAvatar(null);
+    triggerForceRender();
     navigate("/");
   };
 
@@ -79,12 +74,7 @@ const NavigationMenu = () => {
               </Link>
               {item.subItems && (
                 <div className="absolute -left-16 mt-0 w-48 rounded-md text-sm shadow-lg bg-white ring-1 ring-black ring-opacity-5 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition ease-out duration-200">
-                  <div
-                    className="py-1"
-                    role="menu"
-                    aria-orientation="vertical"
-                    aria-labelledby="options-menu"
-                  >
+                  <div className="py-1" role="menu">
                     {item.subItems.map((subItem) => (
                       <HashLink
                         key={subItem.name}
@@ -109,10 +99,10 @@ const NavigationMenu = () => {
                 {userAvatar ? (
                   <AvatarImage src={userAvatar} alt={userName} />
                 ) : (
-                  <AvatarFallback>{userName?.charAt(0).toUpperCase()}</AvatarFallback>
+                  <AvatarFallback>{userName.charAt(0).toUpperCase()}</AvatarFallback>
                 )}
               </Avatar>
-              <span className="text-base font-medium">{userName}</span>
+              <span className="text-base font-medium">Welcome {userName}</span>
               <Button variant="ghost" onClick={handleLogout}>
                 Log out
               </Button>
@@ -124,21 +114,24 @@ const NavigationMenu = () => {
           )}
         </div>
 
-        {/* Mobile menu */}
         <div className="md:hidden ml-4">
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setIsOpen(true)}
-              >
+              <Button variant="ghost" size="icon" onClick={() => setIsOpen(true)}>
                 <Menu className="h-5 w-5" />
                 <span className="sr-only">Toggle menu</span>
               </Button>
             </SheetTrigger>
 
-            <SheetContent side="right">
+            <SheetContent
+              side="right"
+              style={{
+                top: 0,
+                maxHeight: "100vh",
+                overflowY: "auto",
+                position: "fixed",
+              }}
+            >
               <nav className="flex flex-col space-y-4">
                 {navItems.map((item) => (
                   <React.Fragment key={item.name}>
@@ -148,11 +141,7 @@ const NavigationMenu = () => {
                     {item.subItems && (
                       <div className="ml-4 flex flex-col space-y-2">
                         {item.subItems.map((subItem) => (
-                          <Link
-                            key={subItem.name}
-                            to={subItem.href}
-                            className="text-sm text-gray-600"
-                          >
+                          <Link key={subItem.name} to={subItem.href} className="text-sm text-gray-600">
                             {subItem.name}
                           </Link>
                         ))}

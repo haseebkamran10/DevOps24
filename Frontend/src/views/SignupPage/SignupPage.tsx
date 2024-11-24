@@ -25,7 +25,6 @@ const SignupPage = () => {
       return;
     }
   
-    // Basic validation
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       alert("Please enter a valid email address.");
       return;
@@ -41,20 +40,21 @@ const SignupPage = () => {
       zip,
       country,
       password,
-      confirmPassword, // Include confirmPassword
+      confirmPassword,
     };
   
     setIsLoading(true);
     try {
       const response = await registerUser(user);
       alert(`Registration successful! Welcome, ${response.firstName}.`);
-    } catch (error) {
-      console.error(error);
-      alert("Failed to register. Please check your details and try again.");
+    } catch (error: any) {
+      console.error("Registration error:", error.message);
+      alert(error.message);
     } finally {
       setIsLoading(false);
     }
   };
+  
 
   return (
     <>

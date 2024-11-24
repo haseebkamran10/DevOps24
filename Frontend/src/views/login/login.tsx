@@ -2,12 +2,14 @@ import { FormEvent, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { loginUser } from "../../services/loginService"; 
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../../contexts/AuthContext";
 
 const LoginPage = () => {
   const bannerRef = useRef<HTMLImageElement>(null);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const { setUserName, setUserAvatar } = useAuth(); // Use Auth context
    const navigate = useNavigate();
   
   console.log('Email:', username);
@@ -24,13 +26,14 @@ const LoginPage = () => {
     try {
       const response = await loginUser({ email: username, password });
       console.log("Login successful:", response);
+      setUserName(response.name);
   
       // Store the token and user's name in localStorage
       localStorage.setItem("token", response.token);
       localStorage.setItem("userName", response.name);
   
       // Redirect to the homepage
-      navigate("/");
+      navigate("/profile");
     } catch (err: any) {
       setError(err.response?.data || "An error occurred during login.");
     }

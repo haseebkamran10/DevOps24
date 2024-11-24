@@ -42,6 +42,13 @@ const ProfileOverview = () => {
 
   return (
     <>
+      {/* Welcome Section */}
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold">
+          Welcome {userDetails.name === "Guest" ? "Guest" : userDetails.name}
+        </h1>
+      </div>
+
       {/* User Info Section */}
       <Card>
         <CardHeader>
@@ -68,7 +75,7 @@ const ProfileOverview = () => {
         <CardFooter></CardFooter>
       </Card>
 
-      <hr className="rounded"></hr>
+      <hr className="rounded" />
 
       {/* User's Auctions Section */}
       <Card>
