@@ -1,7 +1,7 @@
 import { FormEvent, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { registerUser } from "../../services/registerService"; // Ensure the path is correct
-
+import {useNavigate } from "react-router-dom";
 const SignupPage = () => {
   const bannerRef = useRef<HTMLImageElement>(null);
   const [firstName, setFirstName] = useState("");
@@ -16,9 +16,12 @@ const SignupPage = () => {
   const [isLoading, setIsLoading] = useState(false); // Add loading state
   const [confirmPassword, setConfirmPassword] = useState("");
 
+  const navigate = useNavigate();
+
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    navigate("/login");
   
     if (password !== confirmPassword) {
       alert("Passwords do not match.");
