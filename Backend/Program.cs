@@ -47,12 +47,30 @@ builder.Services.AddDbContext<DatabaseContext>(options =>
            .LogTo(Console.WriteLine, Microsoft.Extensions.Logging.LogLevel.Information));
 
 // Configure JWT Authentication
-var jwtKey = builder.Configuration["Jwt:Key"];
-if (string.IsNullOrEmpty(jwtKey))
+var jwtKeyBase64 = builder.Configuration["Jwt:Key"];
+
+if (string.IsNullOrWhiteSpace(jwtKeyBase64))
 {
-    throw new Exception("JWT key is not configured.");
+    throw new Exception("JWT key is missing in configuration.");
 }
 
+byte[] jwtKeyBytes;
+
+try
+{
+    // Decode the Base64 secret
+    jwtKeyBytes = Convert.FromBase64String(jwtKeyBase64);
+    Console.WriteLine("JWT Secret decoded from Base64.");
+}
+catch (FormatException)
+{
+    // If the secret is not Base64-encoded, fallback to plain text
+    Console.WriteLine("JWT Secret is not Base64-encoded. Using it as plain text.");
+    jwtKeyBytes = Encoding.UTF8.GetBytes(jwtKeyBase64);
+}
+
+
+// Configure JWT Authentication
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -64,7 +82,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateLifetime = true,
             ValidIssuer = "https://wkzkiurvoslbhpmxmpid.supabase.co",
             ValidAudience = "https://wkzkiurvoslbhpmxmpid.supabase.co",
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("W4LtEgb+3OBqhzQ0NjTB1HQa8ixLJUrraKQZAGs5NWK476RzXTG6RNV7R9YGnNbOcaqws/ICnbDpLsb3rFuVCA=="))
+            IssuerSigningKey = new SymmetricSecurityKey(jwtKeyBytes)
         };
         options.Events = new JwtBearerEvents
         {
@@ -77,14 +95,10 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             {
                 Console.WriteLine("Token validated successfully.");
                 return Task.CompletedTask;
-            },
-            OnChallenge = context =>
-            {
-                Console.WriteLine("Authentication challenge triggered.");
-                return Task.CompletedTask;
             }
         };
     });
+
 // Configure CORS
 builder.Services.AddCors(options =>
 {
