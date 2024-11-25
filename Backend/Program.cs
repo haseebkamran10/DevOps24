@@ -50,35 +50,39 @@ builder.Services.AddDbContext<DatabaseContext>(options =>
            .LogTo(Console.WriteLine, Microsoft.Extensions.Logging.LogLevel.Information));
 
 var jwtKeyBase64 = builder.Configuration["Jwt:Key"];
+if (string.IsNullOrWhiteSpace(jwtKeyBase64))
+{
+    throw new Exception("JWT key is missing in configuration. Ensure 'Jwt:Key' is set in appsettings.json or environment variables.");
+}
+
 byte[] jwtKeyBytes;
 try
 {
-    // Attempt to decode the Base64 secret
+    // Forsøg at dekode Base64
     jwtKeyBytes = Convert.FromBase64String(jwtKeyBase64);
     Console.WriteLine("JWT Secret decoded from Base64.");
 }
 catch (FormatException)
 {
-    // Fallback if the secret is not Base64-encoded
+    // Hvis dekodning fejler, brug den som almindelig tekst
     Console.WriteLine("JWT Secret is not Base64-encoded. Using it as plain text.");
     jwtKeyBytes = Encoding.UTF8.GetBytes(jwtKeyBase64);
 }
 
-
-// Configure JWT Authentication
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(jwtKeyBytes),
+            IssuerSigningKey = new SymmetricSecurityKey(jwtKeyBytes), // Bruger korrekt nøgle
             ValidateIssuer = true,
-            ValidIssuer = builder.Configuration["Jwt:Issuer"], // Matches the `iss` claim in the token
-            ValidateAudience = false, // Optional: Set to `true` if you want to validate `aud`
-            ClockSkew = TimeSpan.Zero // Reduces the default 5-minute clock skew
+            ValidIssuer = builder.Configuration["Jwt:Issuer"], // Skal matche `iss` claim i token
+            ValidateAudience = false, // Ændr til `true`, hvis `aud` skal verificeres
+            ClockSkew = TimeSpan.Zero // Undgå tidsforskelle
         };
     });
+
 
 // Configure CORS
 builder.Services.AddCors(options =>
