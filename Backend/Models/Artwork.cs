@@ -11,9 +11,7 @@ namespace Backend.Models
         public string ImageUrl { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
-        public int UserId { get; set; } // ForeignKey to User
-
-        // Navigation property for EF Core
+        public int? UserId { get; set; } 
         public User User { get; set; }
     }
 }

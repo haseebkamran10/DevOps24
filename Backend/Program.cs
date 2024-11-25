@@ -13,7 +13,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
-// Configure Swagger with JWT authentication
+
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "DevOps24 API", Version = "v1" });
@@ -64,7 +64,6 @@ try
 }
 catch (FormatException)
 {
-    // If the secret is not Base64-encoded, fallback to plain text
     Console.WriteLine("JWT Secret is not Base64-encoded. Using it as plain text.");
     jwtKeyBytes = Encoding.UTF8.GetBytes(jwtKeyBase64);
 }
@@ -112,7 +111,7 @@ builder.Services.AddCors(options =>
 });
 
 // Add password hasher
-builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>(); // Scoped is preferred
+builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>(); 
 
 // Add HttpClient for Supabase API
 builder.Services.AddHttpClient("SupabaseClient", client =>
@@ -161,7 +160,7 @@ app.Use(async (context, next) =>
     if (!context.Request.Headers.ContainsKey("Authorization"))
     {
         Console.WriteLine("No Authorization header found.");
-        context.Response.StatusCode = 401; // Unauthorized
+        context.Response.StatusCode = 401; 
         await context.Response.WriteAsync("No Authorization header found.");
         return;
     }
