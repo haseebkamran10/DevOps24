@@ -1,14 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
-using System.Net.Http;
-using System.Text.Json;
-using System.Text;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
-using Backend.DTOs;
+using Microsoft.Extensions.Logging;
 using Backend.Data;
 using Backend.Models;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.Logging; // Ensure you have this using directive
+using Backend.DTOs;
 
 namespace Backend.Controllers
 {
@@ -16,159 +11,52 @@ namespace Backend.Controllers
     [ApiController]
     public class UserController : ControllerBase
     {
-        private readonly IConfiguration _configuration;
         private readonly DatabaseContext _context;
-        private readonly HttpClient _httpClient;
-        private readonly IPasswordHasher<User> _passwordHasher;
-        private readonly ILogger<UserController> _logger; // Logger declaration
+        private readonly ILogger<UserController> _logger;
 
-        public UserController(IConfiguration configuration, DatabaseContext context, IPasswordHasher<User> passwordHasher, ILogger<UserController> logger)
+        public UserController(DatabaseContext context, ILogger<UserController> logger)
         {
-            _configuration = configuration;
             _context = context;
-            _passwordHasher = passwordHasher;
-            _logger = logger; // Initialize logger
-
-            var supabaseUrl = _configuration["Supabase:Url"];
-            if (string.IsNullOrEmpty(supabaseUrl))
-            {
-                throw new Exception("Supabase:Url is not configured. Please check appsettings.json or environment variables.");
-            }
-
-            _httpClient = new HttpClient
-            {
-                BaseAddress = new Uri(supabaseUrl)
-            };
-            _httpClient.DefaultRequestHeaders.Add("apikey", _configuration["Supabase:ApiKey"] ?? throw new Exception("Supabase:ApiKey is not configured."));
+            _logger = logger;
         }
 
-        // Register a new user using Supabase
-        [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] RegisterUserDto registerDto)
+        [HttpPost("add")]
+        public async Task<IActionResult> AddUser([FromBody] RegisterUserDto userDto)
         {
-            var payload = new
+            var user = new User
             {
-                email = registerDto.Email,
-                password = registerDto.Password,
-                options = new
-                {
-                    data = new
-                    {
-                        firstName = registerDto.FirstName,
-                        lastName = registerDto.LastName,
-                        phoneNumber = registerDto.PhoneNumber,
-                        addressLine = registerDto.AddressLine,
-                        city = registerDto.City,
-                        zip = registerDto.Zip,
-                        country = registerDto.Country
-                    }
-                }
+                FirstName = userDto.FirstName,
+                LastName = userDto.LastName,
+                Username = userDto.Username ?? userDto.Email, // Default username to email if not provided
+                Email = userDto.Email,
+                PhoneNumber = userDto.PhoneNumber,
+                AddressLine = userDto.AddressLine,
+                City = userDto.City,
+                Zip = userDto.Zip,
+                Country = userDto.Country,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
             };
 
-            var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
-            var response = await _httpClient.PostAsync("/auth/v1/signup", content);
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
 
-            if (response.IsSuccessStatusCode)
-            {
-                // Save the user data in your database
-                var user = new User
-                {
-                    FirstName = registerDto.FirstName,
-                    LastName = registerDto.LastName,
-                    Username = registerDto.Username,
-                    Email = registerDto.Email,
-                    PhoneNumber = registerDto.PhoneNumber,
-                    AddressLine = registerDto.AddressLine,
-                    City = registerDto.City,
-                    Zip = registerDto.Zip,
-                    Country = registerDto.Country,
-                    PasswordHash = _passwordHasher.HashPassword(null, registerDto.Password), // Hash the password
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow
-                };
-
-                _context.Users.Add(user);
-                await _context.SaveChangesAsync();
-
-                return Ok(new { message = "Registration successful!" });
-            }
-
-            var errorResponse = await response.Content.ReadAsStringAsync();
-            return BadRequest(new { message = "Registration failed.", details = errorResponse });
+            _logger.LogInformation($"New user added: {user.Username}");
+            return Ok(new { message = "User added successfully.", userId = user.UserId });
         }
 
-        // Login an existing user using Supabase
-        [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginUserDto loginDto)
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetUser(int id)
         {
-            var payload = new
+            var user = await _context.Users.FindAsync(id);
+            if (user == null)
             {
-                email = loginDto.Email,
-                password = loginDto.Password
-            };
-
-            var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
-            var response = await _httpClient.PostAsync("/auth/v1/token?grant_type=password", content);
-
-            if (response.IsSuccessStatusCode)
-            {
-                var responseBody = await response.Content.ReadAsStringAsync();
-                var responseJson = JsonSerializer.Deserialize<JsonElement>(responseBody);
-                var accessToken = responseJson.GetProperty("access_token").GetString();
-                var userId = responseJson.GetProperty("user").GetProperty("id").GetString();
-
-                return Ok(new { accessToken, userId, message = "Login successful!" });
+                _logger.LogError($"User not found: {id}");
+                return NotFound("User not found.");
             }
-            else
-            {
-                var errorResponse = await response.Content.ReadAsStringAsync();
-                _logger.LogError($"Login failed for user {loginDto.Email}: {errorResponse}");
-                return Unauthorized(new { message = "Login failed. Please check your credentials and try again." });
-            }
-        }
 
-        // Get user data using Supabase
-        [HttpGet("getUser")]
-        public async Task<IActionResult> GetUser([FromQuery] string userId)
-        {
-            try
-            {
-                Console.WriteLine($"Fetching user data from Supabase for userId: {userId}");
-
-                var response = await _httpClient.GetAsync($"/auth/v1/user/{userId}");
-
-                if (!response.IsSuccessStatusCode)
-                {
-                    var errorDetails = await response.Content.ReadAsStringAsync();
-                    Console.WriteLine($"Failed to fetch user from Supabase: {errorDetails}");
-                    return NotFound(new { message = "User not found in Supabase.", details = errorDetails });
-                }
-
-                var responseContent = await response.Content.ReadAsStringAsync();
-                var userJson = JsonSerializer.Deserialize<JsonElement>(responseContent);
-                var userDto = new UserDto
-                {
-                    FirstName = userJson.GetProperty("user_metadata").TryGetProperty("firstName", out var firstName) ? firstName.GetString() ?? "Unknown" : "Unknown",
-                    LastName = userJson.GetProperty("user_metadata").TryGetProperty("lastName", out var lastName) ? lastName.GetString() ?? "Unknown" : "Unknown",
-                    Username = userJson.GetProperty("user_metadata").TryGetProperty("username", out var username) ? username.GetString() ?? "Unknown" : "Unknown",
-                    Email = userJson.TryGetProperty("email", out var email) ? email.GetString() ?? "noemail@example.com" : "noemail@example.com",
-                    PhoneNumber = userJson.GetProperty("user_metadata").TryGetProperty("phoneNumber", out var phoneNumber) ? phoneNumber.GetString() : string.Empty,
-                    AddressLine = userJson.GetProperty("user_metadata").TryGetProperty("addressLine", out var addressLine) ? addressLine.GetString() : string.Empty,
-                    City = userJson.GetProperty("user_metadata").TryGetProperty("city", out var city) ? city.GetString() : string.Empty,
-                    Zip = userJson.GetProperty("user_metadata").TryGetProperty("zip", out var zip) ? zip.GetString() : string.Empty,
-                    Country = userJson.GetProperty("user_metadata").TryGetProperty("country", out var country) ? country.GetString() ?? "Unknown" : "Unknown",
-                    CreatedAt = userJson.TryGetProperty("created_at", out var createdAt) && DateTime.TryParse(createdAt.GetString(), out var createdDate) ? createdDate : DateTime.MinValue,
-                    UpdatedAt = userJson.TryGetProperty("updated_at", out var updatedAt) && DateTime.TryParse(updatedAt.GetString(), out var updatedDate) ? updatedDate : DateTime.MinValue
-                };
-
-                Console.WriteLine($"Returning user data: {JsonSerializer.Serialize(userDto)}");
-                return Ok(userDto);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error occurred while fetching user data: {ex.Message}");
-                return StatusCode(500, new { message = "An unexpected error occurred while fetching user data." });
-            }
+            _logger.LogInformation($"User fetched: {user.Username}");
+            return Ok(user);
         }
     }
 }

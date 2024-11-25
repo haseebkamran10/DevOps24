@@ -17,23 +17,12 @@ namespace Backend.DTOs
         [Required]
         public string PhoneNumber { get; set; }
 
-        [Required]
-        public string Password { get; set; }
+        public string Username { get; set; } // Optionally required based on your application logic
 
-        [Required]
-        [Compare("Password", ErrorMessage = "Passwords do not match.")]
-        public string ConfirmPassword { get; set; }
-
-        [Required]
-        public string Username { get; set; } // Let users choose their username
-
-        [Required]
         public string AddressLine { get; set; }
 
-        [Required]
         public string City { get; set; }
 
-        [Required]
         public string Zip { get; set; }
 
         [Required]
