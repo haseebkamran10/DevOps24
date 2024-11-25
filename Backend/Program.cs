@@ -171,6 +171,7 @@ app.Use(async (context, next) =>
 
 
 // Enable CORS
+app.UseMiddleware<JwtAuthorizationMiddleware>();
 app.UseCors("AllowFrontend");
 app.UseHttpsRedirection();
 app.UseAuthentication();

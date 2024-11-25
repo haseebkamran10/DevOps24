@@ -138,6 +138,10 @@ public async Task<IActionResult> Login([FromBody] LoginUserDto loginDto)
 [HttpGet("getUser")]
 public async Task<IActionResult> GetUser([FromQuery] string userId)
 {
+     foreach (var header in Request.Headers)
+    {
+        Console.WriteLine($"Header: {header.Key} = {header.Value}");
+    }
     try
     {
         Console.WriteLine($"Fetching user data from Supabase for userId: {userId}");
