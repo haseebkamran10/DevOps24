@@ -24,15 +24,14 @@ namespace Backend.Data
                 entity.Property(e => e.UserId).HasColumnName("user_id");
                 entity.Property(e => e.Username).HasColumnName("username");
                 entity.Property(e => e.Email).HasColumnName("email");
-                entity.Property(e => e.PasswordHash).HasColumnName("password_hash");
                 entity.Property(e => e.CreatedAt).HasColumnName("created_at");
                 entity.Property(e => e.UpdatedAt).HasColumnName("updated_at");
                 entity.Property(e => e.FirstName).HasColumnName("first_name");
                 entity.Property(e => e.LastName).HasColumnName("last_name");
-                entity.Property(e => e.PhoneNumber).HasColumnName("phone_number");
-                entity.Property(e => e.AddressLine).HasColumnName("address_line");
-                entity.Property(e => e.City).HasColumnName("city");
-                entity.Property(e => e.Zip).HasColumnName("zip_code");
+                entity.Property(e => e.PhoneNumber).HasColumnName("phone_number").IsRequired(false);
+                entity.Property(e => e.AddressLine).HasColumnName("address_line").IsRequired(false);
+                entity.Property(e => e.City).HasColumnName("city").IsRequired(false);
+                entity.Property(e => e.Zip).HasColumnName("zip_code").IsRequired(false);
                 entity.Property(e => e.Country).HasColumnName("country");
             });
 

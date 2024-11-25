@@ -1,15 +1,22 @@
+using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Backend.Models;
 using Backend.DTOs;
 using Backend.Data;
-using Microsoft.AspNetCore.Identity;
+using Supabase;
+using Supabase.Gotrue;
 using Microsoft.EntityFrameworkCore;
-using System;
+
+// Resolve ambiguous references by using aliases
+using SupabaseClient = Supabase.Client;
+using SupabaseUser = Supabase.Gotrue.User;
 
 namespace Backend.Controllers
 {
@@ -19,18 +26,18 @@ namespace Backend.Controllers
     {
         private readonly DatabaseContext _context;
         private readonly IConfiguration _configuration;
-        private readonly IPasswordHasher<User> _passwordHasher;
         private readonly ILogger<UserController> _logger;
+        private readonly SupabaseClient _supabaseClient;
 
-        public UserController(DatabaseContext context, IConfiguration configuration, IPasswordHasher<User> passwordHasher, ILogger<UserController> logger)
+        public UserController(DatabaseContext context, IConfiguration configuration, ILogger<UserController> logger)
         {
             _context = context;
             _configuration = configuration;
-            _passwordHasher = passwordHasher;
             _logger = logger;
+            // Initialize the Supabase client
+            _supabaseClient = new SupabaseClient(_configuration["Supabase:Url"], _configuration["Supabase:ApiKey"]);
         }
 
-        // Register a new user
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterUserDto registerDto)
         {
@@ -41,6 +48,13 @@ namespace Backend.Controllers
                 {
                     _logger.LogWarning("Registration failed: User with email {Email} already exists.", registerDto.Email);
                     return BadRequest("User with this email already exists.");
+                }
+
+                var signUpResponse = await _supabaseClient.Auth.SignUpWithEmail(registerDto.Email, registerDto.Password);
+                if (signUpResponse.Error != null)
+                {
+                    _logger.LogError("Supabase registration failed: {Error}", signUpResponse.Error.Message);
+                    return BadRequest("Failed to register user with Supabase.");
                 }
 
                 var user = new User
@@ -58,8 +72,6 @@ namespace Backend.Controllers
                     UpdatedAt = DateTime.UtcNow
                 };
 
-                user.PasswordHash = _passwordHasher.HashPassword(user, registerDto.Password);
-
                 _context.Users.Add(user);
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
@@ -67,60 +79,41 @@ namespace Backend.Controllers
                 _logger.LogInformation("User {Email} registered successfully.", registerDto.Email);
                 return Ok("User registered successfully.");
             }
-            catch (DbUpdateException ex)
-            {
-                await transaction.RollbackAsync();
-                _logger.LogError(ex, "Error executing database update for email {Email}: {ErrorMessage}", registerDto.Email, ex.InnerException?.Message);
-                return StatusCode(500, "Database update failed.");
-            }
             catch (Exception ex)
             {
                 await transaction.RollbackAsync();
-                _logger.LogError(ex, "Transaction rolled back due to an error for email {Email}.", registerDto.Email);
+                _logger.LogError(ex, "Transaction rolled back due to an error: {Error}", ex.Message);
                 return StatusCode(500, "Error registering the user.");
             }
         }
 
-
-        // Login an existing user
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginUserDto loginDto)
         {
-            var user = await _context.Users.SingleOrDefaultAsync(u => u.Email == loginDto.Email);
-
-            if (user == null)
+            var signInResponse = await _supabaseClient.Auth.SignInWithEmail(loginDto.Email, loginDto.Password);
+            if (signInResponse.Error == null)
             {
-                return Unauthorized("Invalid credentials.");
+                var token = GenerateJwtToken(signInResponse.User);
+                return Ok(new { Token = token, User = signInResponse.User });
             }
-
-            var result = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, loginDto.Password);
-
-            if (result == PasswordVerificationResult.Failed)
+            else
             {
-                return Unauthorized("Invalid credentials.");
+                _logger.LogWarning("Login failed for email {Email}: {Error}", loginDto.Email, signInResponse.Error.Message);
+                return Unauthorized(signInResponse.Error.Message);
             }
-
-            // Generate JWT token
-            var token = GenerateJwtToken(user);
-            return Ok(new { Token = token });
         }
 
-        // Generate a JWT token for authenticated users
-        private string GenerateJwtToken(User user)
+        private string GenerateJwtToken(SupabaseUser user)
         {
             var claims = new[]
             {
                 new Claim(JwtRegisteredClaimNames.Sub, user.Email),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()), // Ensure correct property
-                new Claim(ClaimTypes.Name, user.Username)
+                new Claim(ClaimTypes.NameIdentifier, user.Id),
+                new Claim(ClaimTypes.Name, user.Email)
             };
-             var jwtKey = _configuration["Jwt:Key"];
-             if (string.IsNullOrEmpty(jwtKey))
-              {
-                throw new Exception("JWT key is not configured.");
-              }
 
+            var jwtKey = _configuration["Jwt:Key"];
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
@@ -128,7 +121,7 @@ namespace Backend.Controllers
                 issuer: _configuration["Jwt:Issuer"],
                 audience: _configuration["Jwt:Issuer"],
                 claims: claims,
-                expires: DateTime.Now.AddDays(1),
+                expires: DateTime.UtcNow.AddDays(1),
                 signingCredentials: creds
             );
 
