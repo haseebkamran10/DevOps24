@@ -95,7 +95,7 @@ namespace Backend.Controllers
         }
 
         // Login an existing user using Supabase
-       [HttpPost("login")]
+ [HttpPost("login")]
 public async Task<IActionResult> Login([FromBody] LoginUserDto loginDto)
 {
     // Log incoming headers to check if Authorization is being sent
@@ -116,12 +116,24 @@ public async Task<IActionResult> Login([FromBody] LoginUserDto loginDto)
     if (response.IsSuccessStatusCode)
     {
         var responseBody = await response.Content.ReadAsStringAsync();
-        return Ok(JsonSerializer.Deserialize<object>(responseBody)); // Includes token and user details
+        var responseJson = JsonSerializer.Deserialize<JsonElement>(responseBody);
+
+        // Extract token and user ID from the response
+        var accessToken = responseJson.GetProperty("access_token").GetString();
+        var userId = responseJson.GetProperty("user").GetProperty("id").GetString(); // Assuming "user" has "id"
+
+        return Ok(new
+        {
+            accessToken,
+            userId,
+            message = "Login successful!"
+        });
     }
 
     var errorResponse = await response.Content.ReadAsStringAsync();
     return Unauthorized(new { message = "Login failed.", details = errorResponse });
 }
+
 
     }
 }
