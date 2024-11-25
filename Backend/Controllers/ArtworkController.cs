@@ -68,15 +68,16 @@ _logger.LogDebug("Authenticated user ID: {UserId}", userIdClaim);
             try
             {
                 var payload = new
-                {
-                    title = artworkDto.Title,
-                    description = artworkDto.Description,
-                    artist = artworkDto.Artist,
-                    imageUrl = artworkDto.ImageUrl,
-                    createdAt = DateTime.UtcNow,
-                    updatedAt = DateTime.UtcNow,
-                    User
-                };
+{
+    title = artworkDto.Title,
+    description = artworkDto.Description,
+    artist = artworkDto.Artist,
+    imageUrl = artworkDto.ImageUrl,
+    createdAt = DateTime.UtcNow,
+    updatedAt = DateTime.UtcNow,
+    userId = userIdClaim // Assuming you have the user ID from token
+};
+
 
                 var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
                 var response = await _httpClient.PostAsync("/rest/v1/artworks", content);

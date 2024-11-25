@@ -8,7 +8,7 @@ using Backend.DTOs;
 using Backend.Data;
 using Backend.Models;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging; // Ensure you have this using directive
 
 namespace Backend.Controllers
 {
@@ -20,12 +20,14 @@ namespace Backend.Controllers
         private readonly DatabaseContext _context;
         private readonly HttpClient _httpClient;
         private readonly IPasswordHasher<User> _passwordHasher;
+        private readonly ILogger<UserController> _logger; // Logger declaration
 
-        public UserController(IConfiguration configuration, DatabaseContext context, IPasswordHasher<User> passwordHasher)
+        public UserController(IConfiguration configuration, DatabaseContext context, IPasswordHasher<User> passwordHasher, ILogger<UserController> logger)
         {
             _configuration = configuration;
             _context = context;
             _passwordHasher = passwordHasher;
+            _logger = logger; // Initialize logger
 
             var supabaseUrl = _configuration["Supabase:Url"];
             if (string.IsNullOrEmpty(supabaseUrl))
@@ -96,94 +98,77 @@ namespace Backend.Controllers
         }
 
         // Login an existing user using Supabase
- [HttpPost("login")]
-public async Task<IActionResult> Login([FromBody] LoginUserDto loginDto)
-{
-    // Log incoming headers to check if Authorization is being sent
-    foreach (var header in Request.Headers)
-    {
-        Console.WriteLine($"Header: {header.Key} = {header.Value}");
-    }
-
-    var payload = new
-    {
-        email = loginDto.Email,
-        password = loginDto.Password
-    };
-
-    var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
-    var response = await _httpClient.PostAsync("/auth/v1/token?grant_type=password", content);
-
-    if (response.IsSuccessStatusCode)
-    {
-        var responseBody = await response.Content.ReadAsStringAsync();
-        var responseJson = JsonSerializer.Deserialize<JsonElement>(responseBody);
-
-        // Extract token and user ID from the response
-        var accessToken = responseJson.GetProperty("access_token").GetString();
-        var userId = responseJson.GetProperty("user").GetProperty("id").GetString(); // Assuming "user" has "id"
-
-        return Ok(new
+        [HttpPost("login")]
+        public async Task<IActionResult> Login([FromBody] LoginUserDto loginDto)
         {
-            accessToken,
-            userId,
-            message = "Login successful!"
-        });
-    }
+            var payload = new
+            {
+                email = loginDto.Email,
+                password = loginDto.Password
+            };
 
-    var errorResponse = await response.Content.ReadAsStringAsync();
-    return Unauthorized(new { message = "Login failed.", details = errorResponse });
-}
-// Get user data using Supabase
-[HttpGet("getUser")]
-public async Task<IActionResult> GetUser([FromQuery] string userId)
-{
-    try
-    {
-        Console.WriteLine($"Fetching user data from Supabase for userId: {userId}");
+            var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
+            var response = await _httpClient.PostAsync("/auth/v1/token?grant_type=password", content);
 
-        var response = await _httpClient.GetAsync($"/auth/v1/user/{userId}");
+            if (response.IsSuccessStatusCode)
+            {
+                var responseBody = await response.Content.ReadAsStringAsync();
+                var responseJson = JsonSerializer.Deserialize<JsonElement>(responseBody);
+                var accessToken = responseJson.GetProperty("access_token").GetString();
+                var userId = responseJson.GetProperty("user").GetProperty("id").GetString();
 
-        if (!response.IsSuccessStatusCode)
-        {
-            var errorDetails = await response.Content.ReadAsStringAsync();
-            Console.WriteLine($"Failed to fetch user from Supabase: {errorDetails}");
-            return NotFound(new { message = "User not found in Supabase.", details = errorDetails });
+                return Ok(new { accessToken, userId, message = "Login successful!" });
+            }
+            else
+            {
+                var errorResponse = await response.Content.ReadAsStringAsync();
+                _logger.LogError($"Login failed for user {loginDto.Email}: {errorResponse}");
+                return Unauthorized(new { message = "Login failed. Please check your credentials and try again." });
+            }
         }
 
-        var responseContent = await response.Content.ReadAsStringAsync();
-        var userJson = JsonSerializer.Deserialize<JsonElement>(responseContent);
-var userDto = new UserDto
-{
-    FirstName = userJson.GetProperty("user_metadata").TryGetProperty("firstName", out var firstName) ? firstName.GetString() ?? "Unknown" : "Unknown",
-    LastName = userJson.GetProperty("user_metadata").TryGetProperty("lastName", out var lastName) ? lastName.GetString() ?? "Unknown" : "Unknown",
-    Username = userJson.GetProperty("user_metadata").TryGetProperty("username", out var username) ? username.GetString() ?? "Unknown" : "Unknown",
-    Email = userJson.TryGetProperty("email", out var email) ? email.GetString() ?? "noemail@example.com" : "noemail@example.com",
-    PhoneNumber = userJson.GetProperty("user_metadata").TryGetProperty("phoneNumber", out var phoneNumber) ? phoneNumber.GetString() : string.Empty,
-    AddressLine = userJson.GetProperty("user_metadata").TryGetProperty("addressLine", out var addressLine) ? addressLine.GetString() : string.Empty,
-    City = userJson.GetProperty("user_metadata").TryGetProperty("city", out var city) ? city.GetString() : string.Empty,
-    Zip = userJson.GetProperty("user_metadata").TryGetProperty("zip", out var zip) ? zip.GetString() : string.Empty,
-    Country = userJson.GetProperty("user_metadata").TryGetProperty("country", out var country) ? country.GetString() ?? "Unknown" : "Unknown",
-    CreatedAt = userJson.TryGetProperty("created_at", out var createdAt) && DateTime.TryParse(createdAt.GetString(), out var createdDate) ? createdDate : DateTime.MinValue,
-    UpdatedAt = userJson.TryGetProperty("updated_at", out var updatedAt) && DateTime.TryParse(updatedAt.GetString(), out var updatedDate) ? updatedDate : DateTime.MinValue
-};
+        // Get user data using Supabase
+        [HttpGet("getUser")]
+        public async Task<IActionResult> GetUser([FromQuery] string userId)
+        {
+            try
+            {
+                Console.WriteLine($"Fetching user data from Supabase for userId: {userId}");
 
+                var response = await _httpClient.GetAsync($"/auth/v1/user/{userId}");
 
-        Console.WriteLine($"Returning user data: {JsonSerializer.Serialize(userDto)}");
-        return Ok(userDto);
+                if (!response.IsSuccessStatusCode)
+                {
+                    var errorDetails = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"Failed to fetch user from Supabase: {errorDetails}");
+                    return NotFound(new { message = "User not found in Supabase.", details = errorDetails });
+                }
+
+                var responseContent = await response.Content.ReadAsStringAsync();
+                var userJson = JsonSerializer.Deserialize<JsonElement>(responseContent);
+                var userDto = new UserDto
+                {
+                    FirstName = userJson.GetProperty("user_metadata").TryGetProperty("firstName", out var firstName) ? firstName.GetString() ?? "Unknown" : "Unknown",
+                    LastName = userJson.GetProperty("user_metadata").TryGetProperty("lastName", out var lastName) ? lastName.GetString() ?? "Unknown" : "Unknown",
+                    Username = userJson.GetProperty("user_metadata").TryGetProperty("username", out var username) ? username.GetString() ?? "Unknown" : "Unknown",
+                    Email = userJson.TryGetProperty("email", out var email) ? email.GetString() ?? "noemail@example.com" : "noemail@example.com",
+                    PhoneNumber = userJson.GetProperty("user_metadata").TryGetProperty("phoneNumber", out var phoneNumber) ? phoneNumber.GetString() : string.Empty,
+                    AddressLine = userJson.GetProperty("user_metadata").TryGetProperty("addressLine", out var addressLine) ? addressLine.GetString() : string.Empty,
+                    City = userJson.GetProperty("user_metadata").TryGetProperty("city", out var city) ? city.GetString() : string.Empty,
+                    Zip = userJson.GetProperty("user_metadata").TryGetProperty("zip", out var zip) ? zip.GetString() : string.Empty,
+                    Country = userJson.GetProperty("user_metadata").TryGetProperty("country", out var country) ? country.GetString() ?? "Unknown" : "Unknown",
+                    CreatedAt = userJson.TryGetProperty("created_at", out var createdAt) && DateTime.TryParse(createdAt.GetString(), out var createdDate) ? createdDate : DateTime.MinValue,
+                    UpdatedAt = userJson.TryGetProperty("updated_at", out var updatedAt) && DateTime.TryParse(updatedAt.GetString(), out var updatedDate) ? updatedDate : DateTime.MinValue
+                };
+
+                Console.WriteLine($"Returning user data: {JsonSerializer.Serialize(userDto)}");
+                return Ok(userDto);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error occurred while fetching user data: {ex.Message}");
+                return StatusCode(500, new { message = "An unexpected error occurred while fetching user data." });
+            }
+        }
     }
-    catch (Exception ex)
-    {
-        Console.WriteLine($"Error occurred while fetching user data: {ex.Message}");
-        return StatusCode(500, new { message = "An unexpected error occurred while fetching user data." });
-    }
-}
-
-
-
-
-
-
-    }
-
 }

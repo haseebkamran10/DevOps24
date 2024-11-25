@@ -34,9 +34,12 @@ builder.Services.AddSwaggerGen(c =>
                 {
                     Type = ReferenceType.SecurityScheme,
                     Id = "Bearer"
-                }
+                },
+                Scheme = "Bearer",
+                Name = "Bearer",
+                In = ParameterLocation.Header,
             },
-            Array.Empty<string>()
+            new string[] {}
         }
     });
 });
@@ -46,35 +49,43 @@ builder.Services.AddDbContext<DatabaseContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
            .LogTo(Console.WriteLine, Microsoft.Extensions.Logging.LogLevel.Information));
 
-// Configure JWT Authentication
-var jwtKey = builder.Configuration["Jwt:Key"];
-if (string.IsNullOrEmpty(jwtKey))
+var jwtKeyBase64 = builder.Configuration["Jwt:Key"];
+byte[] jwtKeyBytes;
+try
 {
-    throw new Exception("JWT key is not configured.");
+    // Attempt to decode the Base64 secret
+    jwtKeyBytes = Convert.FromBase64String(jwtKeyBase64);
+    Console.WriteLine("JWT Secret decoded from Base64.");
+}
+catch (FormatException)
+{
+    // Fallback if the secret is not Base64-encoded
+    Console.WriteLine("JWT Secret is not Base64-encoded. Using it as plain text.");
+    jwtKeyBytes = Encoding.UTF8.GetBytes(jwtKeyBase64);
 }
 
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-})
-.AddJwtBearer(options =>
-{
-    options.TokenValidationParameters = new TokenValidationParameters
+
+// Configure JWT Authentication
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
     {
-        ValidateIssuerSigningKey = true,
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
-        ValidateIssuer = false,
-        ValidateAudience = false
-    };
-});
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(jwtKeyBytes),
+            ValidateIssuer = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"], // Matches the `iss` claim in the token
+            ValidateAudience = false, // Optional: Set to `true` if you want to validate `aud`
+            ClockSkew = TimeSpan.Zero // Reduces the default 5-minute clock skew
+        };
+    });
 
 // Configure CORS
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowFrontend", builder =>
+    options.AddPolicy("AllowFrontend", policy =>
     {
-        builder.WithOrigins("http://localhost:5173", "https://localhost:5173")
+        policy.WithOrigins("http://localhost:5173", "https://localhost:5173")
                .AllowAnyHeader()
                .AllowAnyMethod()
                .AllowCredentials();
@@ -82,7 +93,7 @@ builder.Services.AddCors(options =>
 });
 
 // Add password hasher
-builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>(); // Scoped is preferred
+builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 
 // Add HttpClient for Supabase API
 builder.Services.AddHttpClient("SupabaseClient", client =>
@@ -118,36 +129,14 @@ app.UseExceptionHandler(errorApp =>
     });
 });
 
-// Log incoming requests for debugging
-app.Use(async (context, next) =>
-{
-    var path = context.Request.Path;
-
-    // Exclude login and register routes from Authorization header check
-    if (path.StartsWithSegments("/api/user/login") || path.StartsWithSegments("/api/user/register"))
-    {
-        await next.Invoke();
-        return;
-    }
-
-    // For all other routes, check Authorization header
-    if (!context.Request.Headers.ContainsKey("Authorization"))
-    {
-        Console.WriteLine("No Authorization header found.");
-        context.Response.StatusCode = 401; // Unauthorized
-        await context.Response.WriteAsync("No Authorization header found.");
-        return;
-    }
-
-    await next.Invoke();
-});
-
+app.UseHttpsRedirection();
 
 // Enable CORS
 app.UseCors("AllowFrontend");
-app.UseHttpsRedirection();
+
 app.UseAuthentication();
 app.UseAuthorization();
+
 app.MapControllers();
 
 app.Run();
