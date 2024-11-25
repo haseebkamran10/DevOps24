@@ -75,7 +75,7 @@ _logger.LogDebug("Authenticated user ID: {UserId}", userIdClaim);
                     imageUrl = artworkDto.ImageUrl,
                     createdAt = DateTime.UtcNow,
                     updatedAt = DateTime.UtcNow,
-                    User
+                    user_id = userIdClaim 
                 };
 
                 var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");

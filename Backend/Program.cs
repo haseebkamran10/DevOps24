@@ -53,22 +53,38 @@ if (string.IsNullOrEmpty(jwtKey))
     throw new Exception("JWT key is not configured.");
 }
 
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-})
-.AddJwtBearer(options =>
-{
-    options.TokenValidationParameters = new TokenValidationParameters
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
     {
-        ValidateIssuerSigningKey = true,
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
-        ValidateIssuer = false,
-        ValidateAudience = false
-    };
-});
-
+        options.Authority = "https://wkzkiurvoslbhpmxmpid.supabase.co/auth/v1";
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidIssuer = "https://wkzkiurvoslbhpmxmpid.supabase.co",
+            ValidAudience = "https://wkzkiurvoslbhpmxmpid.supabase.co",
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("W4LtEgb+3OBqhzQ0NjTB1HQa8ixLJUrraKQZAGs5NWK476RzXTG6RNV7R9YGnNbOcaqws/ICnbDpLsb3rFuVCA=="))
+        };
+        options.Events = new JwtBearerEvents
+        {
+            OnAuthenticationFailed = context =>
+            {
+                Console.WriteLine($"Authentication failed: {context.Exception.Message}");
+                return Task.CompletedTask;
+            },
+            OnTokenValidated = context =>
+            {
+                Console.WriteLine("Token validated successfully.");
+                return Task.CompletedTask;
+            },
+            OnChallenge = context =>
+            {
+                Console.WriteLine("Authentication challenge triggered.");
+                return Task.CompletedTask;
+            }
+        };
+    });
 // Configure CORS
 builder.Services.AddCors(options =>
 {
@@ -118,19 +134,16 @@ app.UseExceptionHandler(errorApp =>
     });
 });
 
-// Log incoming requests for debugging
 app.Use(async (context, next) =>
 {
     var path = context.Request.Path;
 
-    // Exclude login and register routes from Authorization header check
-    if (path.StartsWithSegments("/api/user/login") || path.StartsWithSegments("/api/user/register"))
+    if (path.StartsWithSegments("/api/user/login") || path.StartsWithSegments("/api/user/register")) 
     {
         await next.Invoke();
         return;
     }
 
-    // For all other routes, check Authorization header
     if (!context.Request.Headers.ContainsKey("Authorization"))
     {
         Console.WriteLine("No Authorization header found.");
