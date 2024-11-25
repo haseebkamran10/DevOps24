@@ -13,7 +13,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
-
+// Configure Swagger
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "DevOps24 API", Version = "v1" });
@@ -48,7 +48,6 @@ builder.Services.AddDbContext<DatabaseContext>(options =>
 
 // Configure JWT Authentication
 var jwtKeyBase64 = builder.Configuration["Jwt:Key"];
-
 if (string.IsNullOrWhiteSpace(jwtKeyBase64))
 {
     throw new Exception("JWT key is missing in configuration.");
@@ -58,7 +57,6 @@ byte[] jwtKeyBytes;
 
 try
 {
-    // Decode the Base64 secret
     jwtKeyBytes = Convert.FromBase64String(jwtKeyBase64);
     Console.WriteLine("JWT Secret decoded from Base64.");
 }
@@ -68,8 +66,6 @@ catch (FormatException)
     jwtKeyBytes = Encoding.UTF8.GetBytes(jwtKeyBase64);
 }
 
-
-// Configure JWT Authentication
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -101,17 +97,17 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 // Configure CORS
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowFrontend", builder =>
+    options.AddPolicy("AllowFrontend", policyBuilder =>
     {
-        builder.WithOrigins("http://localhost:5173", "https://localhost:5173")
-               .AllowAnyHeader()
-               .AllowAnyMethod()
-               .AllowCredentials();
+        policyBuilder.WithOrigins("http://localhost:5173", "https://localhost:5173")
+                     .AllowAnyHeader()
+                     .AllowAnyMethod()
+                     .AllowCredentials();
     });
 });
 
 // Add password hasher
-builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>(); 
+builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 
 // Add HttpClient for Supabase API
 builder.Services.AddHttpClient("SupabaseClient", client =>
@@ -137,6 +133,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+// Global exception handler
 app.UseExceptionHandler(errorApp =>
 {
     errorApp.Run(async context =>
@@ -147,31 +144,10 @@ app.UseExceptionHandler(errorApp =>
     });
 });
 
-app.Use(async (context, next) =>
-{
-    var path = context.Request.Path;
-
-    if (path.StartsWithSegments("/api/user/login") || path.StartsWithSegments("/api/user/register")) 
-    {
-        await next.Invoke();
-        return;
-    }
-
-    if (!context.Request.Headers.ContainsKey("Authorization"))
-    {
-        Console.WriteLine("No Authorization header found.");
-        context.Response.StatusCode = 401; 
-        await context.Response.WriteAsync("No Authorization header found.");
-        return;
-    }
-
-    await next.Invoke();
-});
-
-
 // Enable CORS
-app.UseMiddleware<JwtAuthorizationMiddleware>();
 app.UseCors("AllowFrontend");
+
+// Middleware pipeline
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();

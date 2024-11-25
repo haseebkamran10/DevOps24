@@ -97,31 +97,30 @@ public async Task<IActionResult> AddArtwork([FromBody] ArtworkDto artworkDto)
     }
 }
 
+[HttpGet("{id}")]
+public async Task<IActionResult> GetArtwork(int id)
+{
+    try
+    {
+        var response = await _httpClient.GetAsync($"/rest/v1/artworks?artwork_id=eq.{id}");
 
-        [HttpGet("{id}")]
-        [Authorize]
-        public async Task<IActionResult> GetArtwork(int id)
+        if (response.IsSuccessStatusCode)
         {
-            try
-            {
-                var response = await _httpClient.GetAsync($"/rest/v1/artworks?id=eq.{id}");
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var artworkJson = await response.Content.ReadAsStringAsync();
-                    var artwork = JsonSerializer.Deserialize<JsonElement>(artworkJson);
-                    return Ok(artwork);
-                }
-
-                var errorResponse = await response.Content.ReadAsStringAsync();
-                _logger.LogWarning("Failed to retrieve artwork with ID {Id}: {Error}", id, errorResponse);
-                return NotFound(new { message = "Artwork not found.", details = errorResponse });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Unexpected error occurred while retrieving artwork with ID {Id}.", id);
-                return StatusCode(500, "An internal server error occurred.");
-            }
+            var artworkJson = await response.Content.ReadAsStringAsync();
+            var artwork = JsonSerializer.Deserialize<JsonElement>(artworkJson);
+            return Ok(artwork);
         }
+
+        var errorResponse = await response.Content.ReadAsStringAsync();
+        _logger.LogWarning("Failed to retrieve artwork with ID {Id}: {Error}", id, errorResponse);
+        return NotFound(new { message = "Artwork not found.", details = errorResponse });
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "Unexpected error occurred while retrieving artwork with ID {Id}.", id);
+        return StatusCode(500, "An internal server error occurred.");
+    }
+}
+
     }
 }
