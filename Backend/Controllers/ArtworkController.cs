@@ -121,6 +121,30 @@ public async Task<IActionResult> GetArtwork(int id)
         return StatusCode(500, "An internal server error occurred.");
     }
 }
+[HttpGet]
+public async Task<IActionResult> GetAllArtworks()
+{
+    try
+    {
+        var response = await _httpClient.GetAsync("/rest/v1/artworks");
 
+        if (response.IsSuccessStatusCode)
+        {
+            var artworksJson = await response.Content.ReadAsStringAsync();
+            var artworks = JsonSerializer.Deserialize<JsonElement>(artworksJson); // Deserialize JSON to JsonElement
+            return Ok(artworks); // Return all artworks as JSON
+        }
+
+        var errorResponse = await response.Content.ReadAsStringAsync();
+        _logger.LogWarning("Failed to retrieve artworks: {Error}", errorResponse);
+        return StatusCode((int)response.StatusCode, new { message = "Failed to fetch artworks.", details = errorResponse });
     }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "Unexpected error occurred while retrieving artworks.");
+        return StatusCode(500, "An internal server error occurred.");
+    }
+}
+    }
+    
 }

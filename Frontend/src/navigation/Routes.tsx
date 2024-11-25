@@ -4,7 +4,7 @@ import Home from "../views/home/home";
 import Profile from "../views/profile/profile_overview";
 import { Layout } from "./Layout";
 import ProductCatalogPage from "@/views/product-catalogue/product-catalogue-page";
-import LionPainting from "@/views/items/lion-painting";
+import SingleProductPage from "@/views/items/singleProductPage";
 import LoginPage from "@/views/login/login";
 import PaymentPage from "@/views/PaymentPage/PaymentPage";
 import WinnerPage from "@/views/WinnerPage/WinnerPage";
@@ -21,7 +21,7 @@ export const routes: RouteObject[] = [
         element: <Home />,
       },
       {
-        path: "products", // Relative path (no leading slash)
+        path: "products",
         element: <ProductCatalogPage />,
       },
       {
@@ -33,8 +33,8 @@ export const routes: RouteObject[] = [
         element: <Profile />,
       },
       {
-        path: "1",
-        element: <LionPainting />,
+        path: "products/:productId", // Dynamic product route
+        element: <SingleProductPage />,
       },
       {
         path: "login",
@@ -58,5 +58,4 @@ export const routes: RouteObject[] = [
       },
     ],
   },
-  
 ];

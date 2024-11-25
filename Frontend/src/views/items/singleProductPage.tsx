@@ -1,3 +1,6 @@
+import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+import { getArtworkById, ArtworkDto } from "../../services/artworkService"; // API call
 import {
   Accordion,
   AccordionContent,
@@ -5,7 +8,6 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import Carousel from "@/lib/carousel";
-import { useState } from "react";
 import { FaShieldAlt } from "react-icons/fa";
 import { GoShare } from "react-icons/go";
 import { IoMdClose } from "react-icons/io";
@@ -16,9 +18,11 @@ import {
 } from "react-icons/md";
 import { VscVerified } from "react-icons/vsc";
 
-const slides = ["lion-painting.png", "lion-painting2.jpg"];
-
-function LionPainting() {
+function SingleProductPage() {
+  const { productId } = useParams<{ productId: string }>(); // Dynamic route param
+  const [artwork, setArtwork] = useState<ArtworkDto | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
   const [isOverlayOpen, setIsOverlayOpen] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
 
@@ -33,13 +37,43 @@ function LionPainting() {
     { time: "21 Sep 2024 17:43", amount: "$750" },
   ];
 
-  const toggleOverlay = () => {
-    setIsOverlayOpen(!isOverlayOpen);
-  };
+  const toggleOverlay = () => setIsOverlayOpen(!isOverlayOpen);
+  const toggleFavorite = () => setIsFavorite(!isFavorite);
+  useEffect(() => {
+    const fetchArtwork = async () => {
+      try {
+        if (!productId) {
+          setError("Product ID is invalid.");
+          return;
+        }
+        console.log("Fetching artwork with ID:", productId);
+        const data = await getArtworkById(Number(productId)); // Ensure productId is a number
+        console.log("Fetched artwork data:", data);
+        setArtwork(data);
+      } catch (err: any) {
+        console.error("Error fetching artwork:", err.message);
+        setError(err.message || "Failed to fetch artwork.");
+      } finally {
+        setLoading(false);
+      }
+    };
+  
+    fetchArtwork();
+  }, [productId]);
+  
 
-  const toggleFavorite = () => {
-    setIsFavorite(!isFavorite);
-  };
+  // Debug the current artwork state
+  console.log("Artwork state:", artwork);
+
+  if (loading) {
+    return <p>Loading...</p>;
+  }
+
+  if (error) {
+    return <p className="text-red-500">{error}</p>;
+  }
+
+  const slides = artwork?.image_url ? [artwork.image_url] : ["placeholder.jpg"]; // Fallback for missing image
 
   return (
     <div className="flex justify-center items-center">
@@ -54,7 +88,11 @@ function LionPainting() {
 
         <div className="grid w-1/2 ml-8">
           <div className="flex justify-between mb-2">
-            <p className="text-sm text-gray-500">Sun 22 Sep 2024 12:54</p>
+            <p className="text-sm text-gray-500">
+              {artwork?.created_at
+                ? new Date(artwork.created_at).toLocaleDateString()
+                : "Unknown Date"}
+            </p>
             <div className="flex items-center">
               <button className="mr-4 text-2xl">
                 <GoShare />
@@ -64,10 +102,8 @@ function LionPainting() {
               </button>
             </div>
           </div>
-          <h1 className="text-2xl font-bold mb-2">Lion Magnifiqué</h1>
-          <p className="text-gray-500 mb-2">
-            Water color painting in wood frame
-          </p>
+          <h1 className="text-2xl font-bold mb-2">{artwork?.title || "No Title"}</h1>
+          <p className="text-gray-500 mb-2">{artwork?.description || "No Description"}</p>
 
           <div className="flex justify-between mb-2">
             <div className="flex items-center">
@@ -95,7 +131,7 @@ function LionPainting() {
             <AccordionItem value="item-1">
               <AccordionTrigger>Shipping</AccordionTrigger>
               <AccordionContent>
-                <p>Shipping price within Denmark </p>
+                <p>Shipping price within Denmark</p>
                 <p>DKK 36 DHL</p>
               </AccordionContent>
             </AccordionItem>
@@ -113,9 +149,10 @@ function LionPainting() {
 
           <div className="grid mt-4">
             <div className="flex items-center mb-2">
-              <p className="font-bold underline mr-4">Marius Picasso</p>
+              <p className="font-bold underline mr-4">{artwork?.artist || "Unknown Artist"}</p>
               <img
                 src="Marius.jpg"
+                alt="Artist"
                 className="w-12 h-12 rounded-full border-black border"
               />
             </div>
@@ -145,7 +182,6 @@ function LionPainting() {
         </div>
       </div>
 
-      {/* Conditional rendering of the overlay */}
       {isOverlayOpen && (
         <div className="fixed top-32 left-2/3 right-0 bottom-0 border border-gray-300 bg-white rounded-lg shadow-lg w-60 max-h-60 overflow-y-auto z-10">
           <div className="text-center p-4">
@@ -170,4 +206,4 @@ function LionPainting() {
   );
 }
 
-export default LionPainting;
+export default SingleProductPage;
