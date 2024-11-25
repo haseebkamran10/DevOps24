@@ -145,7 +145,6 @@ app.Use(async (context, next) =>
 
 // Enable CORS
 app.UseCors("AllowFrontend");
-
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();

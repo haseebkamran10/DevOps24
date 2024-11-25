@@ -8,6 +8,7 @@ using Backend.DTOs;
 using Backend.Data;
 using Backend.Models;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 namespace Backend.Controllers
 {
@@ -133,7 +134,56 @@ public async Task<IActionResult> Login([FromBody] LoginUserDto loginDto)
     var errorResponse = await response.Content.ReadAsStringAsync();
     return Unauthorized(new { message = "Login failed.", details = errorResponse });
 }
+// Get user data using Supabase
+[HttpGet("getUser")]
+public async Task<IActionResult> GetUser([FromQuery] string userId)
+{
+    try
+    {
+        Console.WriteLine($"Fetching user data from Supabase for userId: {userId}");
+
+        var response = await _httpClient.GetAsync($"/auth/v1/user/{userId}");
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorDetails = await response.Content.ReadAsStringAsync();
+            Console.WriteLine($"Failed to fetch user from Supabase: {errorDetails}");
+            return NotFound(new { message = "User not found in Supabase.", details = errorDetails });
+        }
+
+        var responseContent = await response.Content.ReadAsStringAsync();
+        var userJson = JsonSerializer.Deserialize<JsonElement>(responseContent);
+var userDto = new UserDto
+{
+    FirstName = userJson.GetProperty("user_metadata").TryGetProperty("firstName", out var firstName) ? firstName.GetString() ?? "Unknown" : "Unknown",
+    LastName = userJson.GetProperty("user_metadata").TryGetProperty("lastName", out var lastName) ? lastName.GetString() ?? "Unknown" : "Unknown",
+    Username = userJson.GetProperty("user_metadata").TryGetProperty("username", out var username) ? username.GetString() ?? "Unknown" : "Unknown",
+    Email = userJson.TryGetProperty("email", out var email) ? email.GetString() ?? "noemail@example.com" : "noemail@example.com",
+    PhoneNumber = userJson.GetProperty("user_metadata").TryGetProperty("phoneNumber", out var phoneNumber) ? phoneNumber.GetString() : string.Empty,
+    AddressLine = userJson.GetProperty("user_metadata").TryGetProperty("addressLine", out var addressLine) ? addressLine.GetString() : string.Empty,
+    City = userJson.GetProperty("user_metadata").TryGetProperty("city", out var city) ? city.GetString() : string.Empty,
+    Zip = userJson.GetProperty("user_metadata").TryGetProperty("zip", out var zip) ? zip.GetString() : string.Empty,
+    Country = userJson.GetProperty("user_metadata").TryGetProperty("country", out var country) ? country.GetString() ?? "Unknown" : "Unknown",
+    CreatedAt = userJson.TryGetProperty("created_at", out var createdAt) && DateTime.TryParse(createdAt.GetString(), out var createdDate) ? createdDate : DateTime.MinValue,
+    UpdatedAt = userJson.TryGetProperty("updated_at", out var updatedAt) && DateTime.TryParse(updatedAt.GetString(), out var updatedDate) ? updatedDate : DateTime.MinValue
+};
+
+
+        Console.WriteLine($"Returning user data: {JsonSerializer.Serialize(userDto)}");
+        return Ok(userDto);
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Error occurred while fetching user data: {ex.Message}");
+        return StatusCode(500, new { message = "An unexpected error occurred while fetching user data." });
+    }
+}
+
+
+
+
 
 
     }
+
 }

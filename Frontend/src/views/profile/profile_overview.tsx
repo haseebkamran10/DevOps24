@@ -47,31 +47,26 @@ const ProfileOverview = () => {
       }
 
       try {
-        const userData = await getUserData(parseInt(userId, 10), token);
-        const fullName = `${userData.firstName} ${userData.lastName}`;
+        const userData = await getUserData(userId, token);
+        console.log("Fetched user data:", userData);
 
-        const newDetails = {
+        const fullName = `${userData.firstName} ${userData.lastName}`;
+        setUserDetails({
           name: fullName,
           email: userData.email,
           phone: userData.phoneNumber || "+00 00000000",
-        };
+        });
 
-        setUserDetails(newDetails);
-        localStorage.setItem("userDetails", JSON.stringify(newDetails)); // Persist data in localStorage
-
-        // Update AuthContext to reflect user information globally
-        setUserName(fullName);
+        setUserName(fullName); // Update AuthContext
       } catch (error) {
         console.error("Failed to fetch user data:", error);
-        alert("Unable to fetch user details.");
+        alert("Unable to fetch user details. Redirecting to login.");
+        navigate("/login");
       }
     };
 
-    // Only fetch details if user details are not already loaded
-    if (userDetails.name === "Guest") {
-      fetchUserDetails();
-    }
-  }, [userDetails, navigate, setUserName]);
+    fetchUserDetails();
+  }, [navigate, setUserName]);
 
   return (
     <>
