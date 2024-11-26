@@ -105,5 +105,53 @@ imageUrl = $"http://51.120.6.249:9000/upload/{fileName}";
                 return StatusCode(500, $"An error occurred: {ex.Message}");
             }
         }
+    
+      // Endpoint to fetch all artworks
+        [HttpGet]
+        public async Task<IActionResult> GetAllArtworksAsync()
+        {
+            try
+            {
+                var artworks = await _context.Artworks
+                    .Include(a => a.User) // Optional: Include user details if needed
+                    .ToListAsync();
+
+                if (!artworks.Any())
+                {
+                    return NotFound("No artworks found.");
+                }
+
+                return Ok(artworks);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"An error occurred: {ex.Message}");
+            }
+        }
+
+        // Endpoint to fetch a specific artwork by ID
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetArtworkByIdAsync(int id)
+        {
+            try
+            {
+                var artwork = await _context.Artworks
+                    .Include(a => a.User) // Optional: Include user details if needed
+                    .FirstOrDefaultAsync(a => a.ArtworkId == id);
+
+                if (artwork == null)
+                {
+                    return NotFound("Artwork not found.");
+                }
+
+                return Ok(artwork);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"An error occurred: {ex.Message}");
+            }
+        }
     }
+
+    
 }

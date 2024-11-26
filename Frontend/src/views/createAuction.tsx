@@ -1,6 +1,4 @@
 // src/components/CreateAuctionForm.tsx
-
-import { Auction, createAuction } from "@/services/auctionService";
 import React, { useState } from "react";
 
 const CreateAuctionForm: React.FC = () => {
