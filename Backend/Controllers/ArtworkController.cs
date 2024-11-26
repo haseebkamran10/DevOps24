@@ -1,11 +1,14 @@
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore; // Ensure this is included
+using Microsoft.EntityFrameworkCore;
 using System;
-using System.Linq;
+using System.IO;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using Backend.Data;
-using Backend.Models;
 using Backend.DTOs;
+using Backend.Models;
 
 namespace Backend.Controllers
 {
@@ -20,32 +23,62 @@ namespace Backend.Controllers
             _context = context;
         }
 
-        // Endpoint to create a new artwork
+        // Create a new artwork with file upload
         [HttpPost("create")]
-        public async Task<IActionResult> CreateArtworkAsync([FromBody] CreateArtworkDto artworkDto)
+        public async Task<IActionResult> CreateArtworkAsync([FromForm] CreateArtworkDto artworkDto)
         {
             if (string.IsNullOrEmpty(artworkDto.PhoneNumber))
             {
                 return BadRequest("The phone number is required.");
             }
 
+            if (artworkDto.ImageFile == null || artworkDto.ImageFile.Length == 0)
+            {
+                return BadRequest("An image file is required.");
+            }
+
             using var transaction = await _context.Database.BeginTransactionAsync();
 
             try
             {
-                // Validate the user based on their phone number
+                // Validate user by phone number
                 var user = await _context.Users.SingleOrDefaultAsync(u => u.PhoneNumber == artworkDto.PhoneNumber);
                 if (user == null)
                 {
                     return NotFound("User not found.");
                 }
 
-                // Check if the user has an active session
+                // Check if user has an active session
                 var activeSession = await _context.Sessions
                     .FirstOrDefaultAsync(s => s.UserId == user.UserId && s.ExpiresAt > DateTime.UtcNow);
                 if (activeSession == null)
                 {
                     return Unauthorized("No active session found. Please start a session first.");
+                }
+
+                // Upload the file to the Azure VM
+                string imageUrl;
+                using (var httpClient = new HttpClient())
+                {
+                    // Generate a unique filename
+                    var fileName = $"{Guid.NewGuid()}{Path.GetExtension(artworkDto.ImageFile.FileName)}";
+                    var uploadUrl = $"http://51.120.6.249:9000/upload/{fileName}";
+
+                    using (var fileStream = artworkDto.ImageFile.OpenReadStream())
+                    {
+                        var content = new StreamContent(fileStream);
+                        content.Headers.ContentType = new MediaTypeHeaderValue(artworkDto.ImageFile.ContentType);
+
+                        var response = await httpClient.PutAsync(uploadUrl, content);
+
+                        if (!response.IsSuccessStatusCode)
+                        {
+                            return StatusCode((int)response.StatusCode, "Failed to upload image to Azure VM.");
+                        }
+                    }
+
+                    // Construct the image URL
+imageUrl = $"http://51.120.6.249:9000/upload/{fileName}";
                 }
 
                 // Create the artwork
@@ -54,19 +87,17 @@ namespace Backend.Controllers
                     Title = artworkDto.Title,
                     Description = artworkDto.Description,
                     Artist = artworkDto.Artist,
-                    ImageUrl = artworkDto.ImageUrl,
+                    ImageUrl = imageUrl, // Use the generated image URL
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow,
                     UserId = user.UserId
                 };
 
                 await _context.Artworks.AddAsync(artwork);
-
-                // Save changes
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
 
-                return Ok(new { artworkId = artwork.ArtworkId, message = "Artwork created successfully." });
+                return Ok(new { artworkId = artwork.ArtworkId, message = "Artwork created successfully.", imageUrl });
             }
             catch (Exception ex)
             {
