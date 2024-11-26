@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Linq;
 using System.Threading;
@@ -28,45 +29,71 @@ public class AuctionManagementService : BackgroundService
             {
                 using var scope = _serviceProvider.CreateScope();
                 var dbContext = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
+                var executionStrategy = dbContext.Database.CreateExecutionStrategy();
 
-                // Fetch auctions that need to be closed
-                var auctionsToClose = await dbContext.Auctions
-                    .Include(a => a.Bids) // Include related bids
-                    .Where(a => !a.IsClosed && a.EndTime <= DateTime.UtcNow)
-                    .ToListAsync(stoppingToken);
-
-                foreach (var auction in auctionsToClose)
+                await executionStrategy.ExecuteAsync(async () =>
                 {
-                    _logger.LogInformation($"Processing auction {auction.AuctionId}");
+                    // Fetch auctions that need to be closed
+                    var auctionsToClose = await dbContext.Auctions
+                        .Include(a => a.Bids) // Include related bids
+                        .Where(a => !a.IsClosed && a.EndTime <= DateTime.UtcNow)
+                        .AsNoTracking() // Reduce memory overhead for read-only operations
+                        .ToListAsync(stoppingToken);
 
-                    // Find the winning bid
-                    var winningBid = auction.Bids
-                        .Where(b => b.BidAmount >= auction.MinimumPrice)
-                        .OrderByDescending(b => b.BidAmount)
-                        .FirstOrDefault();
-
-                    if (winningBid != null)
+                    if (!auctionsToClose.Any())
                     {
-                        // Update auction as closed and set the winning bid
-                        auction.IsClosed = true;
-                        auction.CurrentBid = winningBid.BidAmount;
-                        auction.UpdatedAt = DateTime.UtcNow;
-
-                        _logger.LogInformation($"Auction {auction.AuctionId} ended. Winner: User {winningBid.UserId}, Amount: {winningBid.BidAmount}");
-                    }
-                    else
-                    {
-                        // No valid bids; close the auction without a winner
-                        auction.IsClosed = true;
-                        auction.CurrentBid = null;
-                        auction.UpdatedAt = DateTime.UtcNow;
-
-                        _logger.LogInformation($"Auction {auction.AuctionId} ended with no winners.");
+                        _logger.LogInformation("No auctions to process.");
+                        return;
                     }
 
-                    // Save changes to the database
+                    // Process auctions in parallel
+                    var tasks = auctionsToClose.Select(async auction =>
+                    {
+                        try
+                        {
+                            _logger.LogInformation($"Processing auction {auction.AuctionId}");
+
+                            // Reload the auction entity for updates (needed because of AsNoTracking)
+                            var auctionForUpdate = await dbContext.Auctions
+                                .Include(a => a.Bids)
+                                .FirstAsync(a => a.AuctionId == auction.AuctionId, stoppingToken);
+
+                            // Find the winning bid
+                            var winningBid = auctionForUpdate.Bids
+                                .Where(b => b.BidAmount >= auction.MinimumPrice)
+                                .OrderByDescending(b => b.BidAmount)
+                                .FirstOrDefault();
+
+                            if (winningBid != null)
+                            {
+                                // Update auction as closed and set the winning bid
+                                auctionForUpdate.IsClosed = true;
+                                auctionForUpdate.CurrentBid = winningBid.BidAmount;
+                                auctionForUpdate.UpdatedAt = DateTime.UtcNow;
+
+                                _logger.LogInformation($"Auction {auction.AuctionId} ended. Winner: User {winningBid.UserId}, Amount: {winningBid.BidAmount}");
+                            }
+                            else
+                            {
+                                // No valid bids; close the auction without a winner
+                                auctionForUpdate.IsClosed = true;
+                                auctionForUpdate.CurrentBid = null;
+                                auctionForUpdate.UpdatedAt = DateTime.UtcNow;
+
+                                _logger.LogInformation($"Auction {auction.AuctionId} ended with no winners.");
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError($"Error processing auction {auction.AuctionId}: {ex.Message}");
+                        }
+                    });
+
+                    await Task.WhenAll(tasks);
+
+                    // Save all changes in a single transaction
                     await dbContext.SaveChangesAsync(stoppingToken);
-                }
+                });
             }
             catch (Exception ex)
             {
