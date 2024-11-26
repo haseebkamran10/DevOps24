@@ -57,24 +57,26 @@ namespace Backend.Data
 });
 
             // Auction entity configuration
-            modelBuilder.Entity<Auction>(entity =>
+           modelBuilder.Entity<Auction>(entity =>
             {
                 entity.ToTable("auctions");
-                entity.HasKey(e => e.AuctionId);
-                entity.Property(e => e.AuctionId).HasColumnName("auction_id");
-                entity.Property(e => e.ArtworkId).HasColumnName("artwork_id");
-                entity.Property(e => e.StartingBid).HasColumnName("starting_bid").HasColumnType("decimal(18, 2)");
-                entity.Property(e => e.CurrentBid).HasColumnName("current_bid").HasColumnType("decimal(18, 2)");
-                entity.Property(e => e.MinimumPrice).HasColumnName("minimum_price").HasColumnType("decimal(18, 2)");
-                entity.Property(e => e.StartTime).HasColumnName("start_time");
-                entity.Property(e => e.EndTime).HasColumnName("end_time");
-                entity.Property(e => e.IsClosed).HasColumnName("is_closed").HasDefaultValue(false);
-                entity.Property(e => e.CreatedAt).HasColumnName("created_at");
-                entity.Property(e => e.UpdatedAt).HasColumnName("updated_at");
+                entity.HasKey(a => a.AuctionId);
 
-                entity.HasOne(e => e.Artwork)
-                      .WithMany()
-                      .HasForeignKey(e => e.ArtworkId);
+                entity.Property(a => a.AuctionId).HasColumnName("auction_id");
+                entity.Property(a => a.ArtworkId).HasColumnName("artwork_id");
+                entity.Property(a => a.StartingBid).HasColumnName("starting_bid");
+                entity.Property(a => a.CurrentBid).HasColumnName("current_bid").IsRequired(false);
+                entity.Property(a => a.MinimumPrice).HasColumnName("minimum_price");
+                entity.Property(a => a.StartTime).HasColumnName("start_time");
+                entity.Property(a => a.EndTime).HasColumnName("end_time");
+                entity.Property(a => a.IsClosed).HasColumnName("is_closed");
+                entity.Property(a => a.CreatedAt).HasColumnName("created_at");
+                entity.Property(a => a.UpdatedAt).HasColumnName("updated_at");
+
+                // Configure relationship with Bid
+                entity.HasMany(a => a.Bids)
+                      .WithOne(b => b.Auction)
+                      .HasForeignKey(b => b.AuctionId);
             });
 
             // Artwork entity configuration

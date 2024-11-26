@@ -30,5 +30,8 @@ namespace Backend.Models
 
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
+
+        // Add this navigation property
+        public ICollection<Bid> Bids { get; set; } = new List<Bid>();
     }
 }
