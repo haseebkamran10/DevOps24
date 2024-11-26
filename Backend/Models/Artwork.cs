@@ -1,5 +1,3 @@
-using System;
-
 namespace Backend.Models
 {
     public class Artwork
@@ -11,9 +9,9 @@ namespace Backend.Models
         public string ImageUrl { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
-        public int UserId { get; set; } // ForeignKey to User
+        public int? UserId { get; set; } // Nullable to allow artworks without a user
 
-        // Navigation property for EF Core
+        // Add this navigation property
         public User User { get; set; }
     }
 }
