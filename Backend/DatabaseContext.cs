@@ -5,20 +5,20 @@ namespace Backend.Data
 {
     public class DatabaseContext : DbContext
     {
-        public DatabaseContext(DbContextOptions<DatabaseContext> options) : base(options) {}
+        public DatabaseContext(DbContextOptions<DatabaseContext> options) : base(options) { }
 
         public DbSet<User> Users { get; set; }
         public DbSet<Auction> Auctions { get; set; }
         public DbSet<Bid> Bids { get; set; }
         public DbSet<Artwork> Artworks { get; set; }
-        public DbSet<Session> Sessions { get; set; }  // Declare the DbSet for Sessions
+        public DbSet<Session> Sessions { get; set; } // Declare the DbSet for Sessions
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
             // User entity configuration
-           modelBuilder.Entity<User>(entity =>
+            modelBuilder.Entity<User>(entity =>
             {
                 entity.ToTable("users");
                 entity.HasKey(e => e.UserId);
@@ -46,9 +46,14 @@ namespace Backend.Data
                 entity.Property(e => e.AuctionId).HasColumnName("auction_id");
                 entity.Property(e => e.UserId).HasColumnName("user_id");
                 entity.Property(e => e.BidAmount).HasColumnName("bid_amount").HasColumnType("decimal(18, 2)");
-                entity.Property(e => e.BidTime).HasColumnName("bid_time");
-                entity.Property(e => e.SessionId).HasColumnName("session_id").IsRequired(false);
                 
+                // Explicitly map BidTime to "timestamp without time zone"
+                entity.Property(e => e.BidTime)
+                      .HasColumnName("bid_time")
+                      .HasColumnType("timestamp without time zone");
+
+                entity.Property(e => e.SessionId).HasColumnName("session_id").IsRequired(false);
+
                 entity.HasOne(e => e.Session).WithMany(s => s.Bids).HasForeignKey(e => e.SessionId);
             });
 
@@ -61,10 +66,16 @@ namespace Backend.Data
                 entity.Property(e => e.ArtworkId).HasColumnName("artwork_id");
                 entity.Property(e => e.StartingBid).HasColumnName("starting_bid").HasColumnType("decimal(18, 2)");
                 entity.Property(e => e.CurrentBid).HasColumnName("current_bid").HasColumnType("decimal(18, 2)");
-                entity.Property(e => e.SecretThreshold).HasColumnName("minimum_price").HasColumnType("decimal(18, 2)");
+                entity.Property(e => e.MinimumPrice).HasColumnName("minimum_price").HasColumnType("decimal(18, 2)");
                 entity.Property(e => e.StartTime).HasColumnName("start_time");
                 entity.Property(e => e.EndTime).HasColumnName("end_time");
                 entity.Property(e => e.IsClosed).HasColumnName("is_closed").HasDefaultValue(false);
+                entity.Property(e => e.CreatedAt).HasColumnName("created_at");
+                entity.Property(e => e.UpdatedAt).HasColumnName("updated_at");
+
+                entity.HasOne(e => e.Artwork)
+                      .WithMany()
+                      .HasForeignKey(e => e.ArtworkId);
             });
 
             // Artwork entity configuration

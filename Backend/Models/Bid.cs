@@ -21,6 +21,7 @@ namespace Backend.Models
         [Column(TypeName = "decimal(18, 2)")]
         public decimal BidAmount { get; set; }
 
+        [Column(TypeName = "timestamp without time zone")]
         public DateTime BidTime { get; set; }
 
         [ForeignKey("Session")]

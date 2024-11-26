@@ -1,8 +1,11 @@
 using Microsoft.AspNetCore.Mvc;
-using Backend.Data;
-using Backend.Models;
-using Backend.DTOs;
 using Microsoft.EntityFrameworkCore;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
+using Backend.Data;
+using Backend.DTOs;
+using Backend.Models;
 
 namespace Backend.Controllers
 {
@@ -17,67 +20,84 @@ namespace Backend.Controllers
             _context = context;
         }
 
-        // GET: api/auction/{id}
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetAuction(int id)
+        // Endpoint to start an auction
+        [HttpPost("start")]
+        public async Task<IActionResult> StartAuctionAsync([FromBody] AuctionDto auctionDto)
         {
-            var auction = await _context.Auctions
-                .Include(a => a.Bids)
-                .FirstOrDefaultAsync(a => a.AuctionId == id);
-
-            if (auction == null)
-                return NotFound("Auction not found.");
-              // Ensure auction.Bids is not null and get the highest bid amount
-            var highestBid = auction.Bids?.Max(b => b.BidAmount) ?? 0;    
-
-            return Ok(new
+            if (string.IsNullOrEmpty(auctionDto.PhoneNumber))
             {
-                auction.AuctionId,
-                auction.ArtworkId,
-                auction.StartingBid,
-                auction.CurrentBid,
-                auction.StartTime,
-                auction.EndTime,
-                auction.IsClosed,
-                HighestBid = highestBid,
-            });
-        }
-
-        // POST: api/auction/bid
-        [HttpPost("bid")]
-        public async Task<IActionResult> PlaceBid([FromBody] PlaceBidDto bidDto)
-        {
-            var auction = await _context.Auctions.FindAsync(bidDto.AuctionId);
-
-            if (auction == null || auction.IsClosed || auction.EndTime < DateTime.UtcNow)
-                return BadRequest("Auction is not active or does not exist.");
-
-            if (bidDto.BidAmount <= auction.CurrentBid)
-                return BadRequest("Bid amount must be higher than the current bid.");
-
-            var bid = new Bid
-            {
-                AuctionId = auction.AuctionId,
-                UserId = 1, // Replace with user ID from authentication
-                BidAmount = bidDto.BidAmount,
-                BidTime = DateTime.UtcNow
-            };
-
-            _context.Bids.Add(bid);
-
-            // Update auction's current bid
-            auction.CurrentBid = bidDto.BidAmount;
-
-            // Check if the secret threshold is met
-            if (bidDto.BidAmount >= auction.SecretThreshold)
-            {
-                auction.IsClosed = true; // Close the auction
-                return Ok(new { Message = "Congratulations! You won the auction!" });
+                return BadRequest("The phone number is required.");
             }
 
-            await _context.SaveChangesAsync();
+            using var transaction = await _context.Database.BeginTransactionAsync();
 
-            return Ok(new { Message = "Bid placed successfully." });
+            try
+            {
+                // Validate user by phone number
+                var user = await _context.Users.SingleOrDefaultAsync(u => u.PhoneNumber == auctionDto.PhoneNumber);
+                if (user == null)
+                {
+                    return NotFound("User not found.");
+                }
+
+                // Check if user has an active session
+                var activeSession = await _context.Sessions
+                    .FirstOrDefaultAsync(s => s.UserId == user.UserId && s.ExpiresAt > DateTime.UtcNow);
+                if (activeSession == null)
+                {
+                    return Unauthorized("No active session found. Please start a session first.");
+                }
+
+                // Validate ownership of the artwork
+                var artwork = await _context.Artworks.FirstOrDefaultAsync(a => a.ArtworkId == auctionDto.ArtworkId && a.UserId == user.UserId);
+                if (artwork == null)
+                {
+                    return NotFound("Artwork not found or you do not have permission to auction this artwork.");
+                }
+
+                // Check if the artwork is already auctioned
+                var existingAuction = await _context.Auctions.FirstOrDefaultAsync(a => a.ArtworkId == auctionDto.ArtworkId && !a.IsClosed);
+                if (existingAuction != null)
+                {
+                    return BadRequest("An active auction already exists for this artwork.");
+                }
+
+                // Create the auction
+                var auction = new Auction
+                {
+                    ArtworkId = auctionDto.ArtworkId,
+                    StartingBid = auctionDto.StartingBid,
+                    MinimumPrice = auctionDto.SecretThreshold,
+                    StartTime = DateTime.UtcNow,
+                    EndTime = DateTime.UtcNow.AddHours(auctionDto.DurationHours),
+                    IsClosed = false,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                };
+
+                await _context.Auctions.AddAsync(auction);
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                return Ok(new { auctionId = auction.AuctionId, message = "Auction started successfully." });
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                return StatusCode(500, $"An error occurred: {ex.Message}");
+            }
+        }
+
+        // Endpoint to get active auctions
+        [HttpGet("active")]
+        public async Task<IActionResult> GetActiveAuctionsAsync()
+        {
+            var activeAuctions = await _context.Auctions
+                .Where(a => !a.IsClosed && a.StartTime <= DateTime.UtcNow && a.EndTime > DateTime.UtcNow)
+                .Include(a => a.Artwork)
+                .ToListAsync();
+
+            return Ok(activeAuctions);
         }
     }
 }
