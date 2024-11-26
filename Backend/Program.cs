@@ -12,8 +12,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddHostedService<AuctionManagementService>();
-
+/*builder.Services.AddHostedService<AuctionManagementService>();*/
 
 // Configure Swagger with JWT authentication
 builder.Services.AddSwaggerGen(c =>
@@ -47,16 +46,19 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 // Configure database context
-builder.Services.AddDbContext<DatabaseContext>(options =>
-    options.UseNpgsql(
-        builder.Configuration.GetConnectionString("DefaultConnection")
-    )
-    .LogTo(Console.WriteLine, LogLevel.Information)
-    .EnableSensitiveDataLogging()
-    .EnableDetailedErrors()
+builder.Services.AddDbContextFactory<DatabaseContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
+           .LogTo(Console.WriteLine, LogLevel.Information)
+           .EnableSensitiveDataLogging()
+           .EnableDetailedErrors());
+
+
+// Add DbContextFactory for background services
+builder.Services.AddDbContextFactory<DatabaseContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
 );
 
-
+// JWT Configuration
 var jwtKeyBase64 = builder.Configuration["Jwt:Key"];
 if (string.IsNullOrWhiteSpace(jwtKeyBase64))
 {
@@ -66,13 +68,13 @@ if (string.IsNullOrWhiteSpace(jwtKeyBase64))
 byte[] jwtKeyBytes;
 try
 {
-    // Forsøg at dekode Base64
+    // Attempt Base64 decode
     jwtKeyBytes = Convert.FromBase64String(jwtKeyBase64);
     Console.WriteLine("JWT Secret decoded from Base64.");
 }
 catch (FormatException)
 {
-    // Hvis dekodning fejler, brug den som almindelig tekst
+    // If decoding fails, use plain text
     Console.WriteLine("JWT Secret is not Base64-encoded. Using it as plain text.");
     jwtKeyBytes = Encoding.UTF8.GetBytes(jwtKeyBase64);
 }
@@ -83,14 +85,13 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(jwtKeyBytes), // Bruger korrekt nøgle
+            IssuerSigningKey = new SymmetricSecurityKey(jwtKeyBytes), // Correct key
             ValidateIssuer = true,
-            ValidIssuer = builder.Configuration["Jwt:Issuer"], // Skal matche `iss` claim i token
-            ValidateAudience = false, // Ændr til `true`, hvis `aud` skal verificeres
-            ClockSkew = TimeSpan.Zero // Undgå tidsforskelle
+            ValidIssuer = builder.Configuration["Jwt:Issuer"], // Must match `iss` claim in token
+            ValidateAudience = false, // Change to `true` if `aud` needs to be verified
+            ClockSkew = TimeSpan.Zero // Avoid time differences
         };
     });
-
 
 // Configure CORS
 builder.Services.AddCors(options =>
