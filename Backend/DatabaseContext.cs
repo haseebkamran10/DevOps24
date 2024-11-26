@@ -38,24 +38,23 @@ namespace Backend.Data
             });
 
             // Bid entity configuration
-            modelBuilder.Entity<Bid>(entity =>
-            {
-                entity.ToTable("bids");
-                entity.HasKey(e => e.BidId);
-                entity.Property(e => e.BidId).HasColumnName("bid_id");
-                entity.Property(e => e.AuctionId).HasColumnName("auction_id");
-                entity.Property(e => e.UserId).HasColumnName("user_id");
-                entity.Property(e => e.BidAmount).HasColumnName("bid_amount").HasColumnType("decimal(18, 2)");
-                
-                // Explicitly map BidTime to "timestamp without time zone"
-                entity.Property(e => e.BidTime)
-                      .HasColumnName("bid_time")
-                      .HasColumnType("timestamp without time zone");
+  modelBuilder.Entity<Bid>(entity =>
+{
+    entity.ToTable("bids");
+    entity.HasKey(e => e.BidId);
+    entity.Property(e => e.BidId).HasColumnName("bid_id");
+    entity.Property(e => e.AuctionId).HasColumnName("auction_id");
+    entity.Property(e => e.UserId).HasColumnName("user_id");
+    entity.Property(e => e.BidAmount)
+          .HasColumnName("bid_amount")
+          .HasColumnType("decimal(18, 2)");
+    entity.Property(e => e.BidTime).HasColumnName("bid_time"); // Consistent with other entities
+    entity.Property(e => e.SessionId).HasColumnName("session_id").IsRequired(false);
 
-                entity.Property(e => e.SessionId).HasColumnName("session_id").IsRequired(false);
-
-                entity.HasOne(e => e.Session).WithMany(s => s.Bids).HasForeignKey(e => e.SessionId);
-            });
+    entity.HasOne(e => e.Session)
+          .WithMany(s => s.Bids)
+          .HasForeignKey(e => e.SessionId);
+});
 
             // Auction entity configuration
             modelBuilder.Entity<Auction>(entity =>
