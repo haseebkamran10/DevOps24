@@ -57,6 +57,9 @@ namespace Backend.Controllers
                 await _context.Sessions.AddAsync(session);
                 user.LastSessionId = session.SessionId;
 
+                // Update the `updated_at` field
+                user.UpdatedAt = DateTime.UtcNow;
+
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
 
