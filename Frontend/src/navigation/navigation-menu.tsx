@@ -133,7 +133,7 @@ const NavigationMenu = () => {
             <div className="flex items-center space-x-4">
               <Avatar onClick={() => navigate("/profile")} className="cursor-pointer">
                 {userAvatar ? (
-                  <AvatarImage src={userAvatar} alt={userName} />
+                  <AvatarImage src="/Frontend/src/assets/batman.png" alt={userName} />
                 ) : (
                   <AvatarFallback>{userName.charAt(0).toUpperCase()}</AvatarFallback>
                 )}

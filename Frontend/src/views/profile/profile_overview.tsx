@@ -19,7 +19,7 @@ import {
 import art1 from "@/assets/art_placeholder1.webp";
 import art2 from "@/assets/art_placeholder2.jpg";
 import art3 from "@/assets/art_placeholder3.png";
-import { getUser, getUserByPhoneNumber } from "../../services/UserService"; // Import the getUser function
+import { getUserByPhoneNumber } from "../../services/UserService"; // Import the getUser function
 
 const ProfileOverview = () => {
   const [userDetails, setUserDetails] = useState(() => {

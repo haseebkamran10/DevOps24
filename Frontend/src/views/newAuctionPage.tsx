@@ -22,7 +22,7 @@ function NewAuctionPage() {
 
   useEffect(() => {
     if (startDate) {
-      setMinEndDate(startDate); // Sets minEndDate equal to startDate when startDate is set
+      setMinEndDate(startDate);
     }
   }, [startDate]);
 
@@ -50,7 +50,6 @@ function NewAuctionPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Form håndterning yada yada her
     console.log({
       itemName,
       description,
@@ -65,216 +64,153 @@ function NewAuctionPage() {
   };
 
   return (
-    <div className="w-full mx-auto bg-white justify-center flex">
-      <form
-        onSubmit={handleSubmit}
-        className="border rounded-3xl w-3/4 m-40 p-8"
-      >
-        <h1 className="text-2xl font-bold mb-6 text-center text-black">
-          Create new Auction
-        </h1>
+    <div className="w-full mx-auto bg-white flex justify-center px-4 sm:px-6 lg:px-8">
+      <form onSubmit={handleSubmit} className="border rounded-3xl w-full max-w-3xl p-6 sm:p-8 m-8 bg-gray-100 shadow-lg">
+        <h1 className="text-3xl font-semibold mb-6 text-center text-gray-800">Create New Auction</h1>
 
-        <div className="flex justify-between">
-          <div className="flex-1 mr-4">
-            <div className="flex mb-4">
-              {/* Item name */}
-              <div className="flex-1 px-2">
-                <label
-                  className="flex text-gray-700 font-light mb-2"
-                  htmlFor="itemName"
-                >
-                  Item Name
-                </label>
-                <input
-                  type="text"
-                  id="itemName"
-                  value={itemName}
-                  onChange={(e) => setItemName(e.target.value)}
-                  className="w-full border border-gray-400 p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Enter item name..."
-                  required
-                  autoFocus
-                />
-              </div>
-
-              {/* Item category */}
-              <div className="flex-1 px-2">
-                <label
-                  className="flex text-gray-700 font-light mb-2"
-                  htmlFor="itemCategory"
-                >
-                  Item Category
-                </label>
-                <input
-                  type="text"
-                  id="itemCategory"
-                  value={itemCategory}
-                  onChange={(e) => setItemCategory(e.target.value)}
-                  className="w-full border border-gray-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Enter item category..."
-                  required
-                />
-              </div>
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            {/* Item Name */}
+            <div>
+              <label className="block text-gray-700 font-medium mb-2" htmlFor="itemName">Item Name</label>
+              <input
+                type="text"
+                id="itemName"
+                value={itemName}
+                onChange={(e) => setItemName(e.target.value)}
+                className="w-full bg-white text-black border border-gray-400 p-2 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                placeholder="Enter item name..."
+                required
+              />
             </div>
 
-            <div className="flex mb-4">
-              {/* Item tag */}
-              <div className="flex-1 px-2">
-                <label
-                  className="flex text-gray-700 font-light mb-2"
-                  htmlFor="itemTag"
-                >
-                  Tag
-                </label>
-                <input
-                  type="text"
-                  id="itemTag"
-                  value={tag}
-                  onChange={(e) => setTag(e.target.value)}
-                  className="w-full border border-gray-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Enter item tag..."
-                  required
-                />
-              </div>
-
-              {/* Item condition */}
-              <div className="flex-1 px-2">
-                <label
-                  className="flex text-gray-700 font-light mb-2"
-                  htmlFor="itemCondition"
-                >
-                  Item Condition
-                </label>
-                <input
-                  type="text"
-                  id="itemCondition"
-                  value={itemCondition}
-                  onChange={(e) => setItemCondition(e.target.value)}
-                  className="w-full border border-gray-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Enter item condition..."
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="flex mb-4">
-              {/* Start date */}
-              <div className="flex-1 px-2">
-                <label
-                  className="flex text-gray-700 font-light mb-2"
-                  htmlFor="startDate"
-                >
-                  Start date
-                </label>
-                <input
-                  type="datetime-local"
-                  id="startDate"
-                  value={startDate}
-                  min={minStartDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="w-full border border-gray-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
-                />
-              </div>
-
-              {/* End date */}
-              <div className="flex-1 px-2">
-                <label
-                  className="flex text-gray-700 font-light mb-2"
-                  htmlFor="endDate"
-                >
-                  End date
-                </label>
-                <input
-                  type="datetime-local"
-                  id="endDate"
-                  value={endDate}
-                  min={minEndDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  className="w-full border border-gray-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
-                />
-              </div>
-            </div>
-            <div className="flex mb-4">
-              {/* Description */}
-              <div className="flex-1 px-2">
-                <label
-                  className="flex text-gray-700 font-light mb-2"
-                  htmlFor="description"
-                >
-                  Description
-                </label>
-                <textarea
-                  id="description"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  className="min-h-[2.625rem] w-full border border-gray-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Enter the item description..."
-                  required
-                />
-              </div>
-
-              {/* Price */}
-              <div className="flex-1 px-2 ">
-                <label
-                  className="flex text-gray-700 font-light mb-2"
-                  htmlFor="price"
-                >
-                  Price
-                </label>
-                <input
-                  type="number"
-                  id="price"
-                  value={price}
-                  onChange={(e) => setPrice(e.target.value)}
-                  className="w-full border border-gray-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Enter the item price..."
-                  required
-                />
-              </div>
+            {/* Item Category */}
+            <div>
+              <label className="block text-gray-700 font-medium mb-2" htmlFor="itemCategory">Item Category</label>
+              <input
+                type="text"
+                id="itemCategory"
+                value={itemCategory}
+                onChange={(e) => setItemCategory(e.target.value)}
+                className="w-full bg-white text-black border border-gray-400 p-2 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                placeholder="Enter item category..."
+                required
+              />
             </div>
           </div>
 
-          {/* Image */}
-          <div className="flex-1 ml-4">
-            <div className="flex flex-col items-center justify-center h-full">
-              <label
-                className="block text-gray-700 font-light mb-2"
-                htmlFor="image"
-              >
-                Upload Images
-              </label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            {/* Tag */}
+            <div>
+              <label className="block text-gray-700 font-medium mb-2" htmlFor="itemTag">Tag</label>
               <input
-                type="file"
-                id="image"
-                onChange={handleImageChange}
-                className="w-full border border-gray-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                multiple
+                type="text"
+                id="itemTag"
+                value={tag}
+                onChange={(e) => setTag(e.target.value)}
+                className="w-full bg-white text-black border border-gray-400 p-2 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                placeholder="Enter item tag..."
                 required
-                accept="image/*"
               />
-              {/* Image previews */}
-              <div className="mt-4 grid grid-cols-3 gap-4">
-                {imagePreviews.map((preview, index) => (
-                  <img
-                    key={index}
-                    src={preview}
-                    alt={`Preview ${index}`}
-                    className="max-h-2rem"
-                  />
-                ))}
-              </div>
+            </div>
+
+            {/* Item Condition */}
+            <div>
+              <label className="block text-gray-700 font-medium mb-2" htmlFor="itemCondition">Condition</label>
+              <input
+                type="text"
+                id="itemCondition"
+                value={itemCondition}
+                onChange={(e) => setItemCondition(e.target.value)}
+                className="w-full bg-white text-black border border-gray-400 p-2 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                placeholder="Enter item condition..."
+                required
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            {/* Start Date */}
+            <div>
+              <label className="block text-gray-700 font-medium mb-2" htmlFor="startDate">Start Date</label>
+              <input
+                type="datetime-local"
+                id="startDate"
+                value={startDate}
+                min={minStartDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                 className="w-full bg-black text-white border border-gray-400 p-2 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                required
+              />
+            </div>
+
+            {/* End Date */}
+            <div>
+              <label className="block text-gray-700 font-medium mb-2" htmlFor="endDate">End Date</label>
+              <input
+                type="datetime-local"
+                id="endDate"
+                value={endDate}
+                min={minEndDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                 className="w-full bg-black text-white  border border-gray-400 p-2 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                required
+              />
+            </div>
+          </div>
+
+          {/* Description */}
+          <div>
+            <label className="block text-gray-700 font-medium mb-2" htmlFor="description">Description</label>
+            <textarea
+              id="description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="w-full bg-white text-black border border-gray-400 p-2 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              placeholder="Enter the item description..."
+              required
+            />
+          </div>
+
+          {/* Price */}
+          <div>
+            <label className="block text-gray-700 font-medium mb-2" htmlFor="price">Price</label>
+            <input
+              type="number"
+              id="price"
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
+              className="w-full bg-white text-black border border-gray-400 p-2 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              placeholder="Enter the item price..."
+              required
+            />
+          </div>
+
+          {/* Image Upload */}
+          <div>
+            <label className="block text-gray-700 font-medium mb-2" htmlFor="image">Upload Images</label>
+            <input
+              type="file"
+              id="image"
+              onChange={handleImageChange}
+              className="w-full bg-white text-black border border-gray-400 p-2 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              multiple
+              required
+              accept="image/*"
+            />
+            <div className="mt-4 grid grid-cols-3 gap-2">
+              {imagePreviews.map((preview, index) => (
+                <img key={index} src={preview} alt={`Preview ${index}`} className="h-24 w-24 object-cover rounded-lg shadow-md" />
+              ))}
             </div>
           </div>
         </div>
 
-        {/* Submit button */}
-        <div className="flex justify-center mt-6">
+        <div className="flex justify-center mt-8">
           <button
             type="submit"
-            className="w-1/4 bg-blue-500 text-white font-bold py-2 px-4 rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
+            className="w-full sm:w-1/3 bg-indigo-600 text-white font-semibold py-3 px-4 rounded-lg hover:bg-indigo-700 transition focus:outline-none focus:ring-2 focus:ring-blue-500"
+          > 
             Create Auction
           </button>
         </div>

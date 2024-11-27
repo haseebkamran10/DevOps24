@@ -8,45 +8,49 @@ interface WinnerPageProps {
 }
 
 const WinnerPage: React.FC<WinnerPageProps> = ({
-  winnerName = "John Doe",
-  itemTitle = "The Monet",
-  auctionEndDate = "26/9 - 2024",
+  winnerName = "Lars Sommer",
+  itemTitle = "The Chessboard",
+  auctionEndDate = "29/11 - 2024",
 }) => {
   const navigate = useNavigate();
+
   const handleNavigateToPayment = () => {
     navigate("/paymentpage");
   };
 
   return (
-    <div className="flex flex-col justify-center items-center p-8 min-h-screen font-sans">
+    <div className="flex flex-col items-center justify-center p-8 min-h-screen bg-gray-50 font-sans">
+      <h1 className="text-4xl font-semibold text-indigo-800 mb-4 text-center animate-pulse">
+        🎉 Congratulations, {winnerName}! 🎉
+      </h1>
       <img
         src="/hardCoded pic 1.jpg"
         alt="Winner Celebration"
-        className="mb-6 w-2/3 max-w-md rounded-lg shadow-lg"
+        onError={(e) => { e.currentTarget.src = "/placeholder.jpg"; }}
+        className="mb-6 w-full max-w-md rounded-3xl shadow-lg"
       />
-      <h1 className="text-4xl font-bold text-primary mb-6 text-center">
-        Congratulations, {winnerName}!
-      </h1>
 
-      <div className=" p-6 rounded-lg shadow-md w-full max-w-lg mb-6 text-center">
-        <p className="text-lg text-primary mb-4">
-          Your auction for <strong>{itemTitle}</strong> has been successfully
-          processed.
+      <div className="bg-white p-6 rounded-3xl shadow-md w-full max-w-lg mb-6 text-center">
+        <p className="text-lg text-gray-700 mb-4">
+          You are now the proud owner of <strong>{itemTitle}</strong>
         </p>
-        <p className="text-lg text-primary mb-4">
-          All that's left now is the delivery of your purchase.
+        <p className="text-lg text-gray-700 mb-4">
+          Your winning item is prepared and ready for its journey to you.
         </p>
-        <p className="text-lg text-primary">
-          Auction Ended on: <strong>{auctionEndDate}</strong>
+        <p className="text-lg text-gray-700">
+          <span className="font-medium">Auction Ended:</span> <strong>{auctionEndDate}</strong>
         </p>
       </div>
 
-      <button
-        className="bg-indigo-600 text-white py-2 px-4 rounded-md text-lg hover:bg-indigo-700"
-        onClick={handleNavigateToPayment}
-      >
-        Proceed to Payment
-      </button>
+      <div className="flex gap-4">
+        <button
+          className="relative bg-indigo-600 text-white py-3 px-10  text-lg font-semibold shadow-lg  hover:bg-indigo-700  focus:outline-none focus:ring-4 focus:ring-indigo-500 focus:ring-offset-2"
+          onClick={handleNavigateToPayment}
+        >
+          <span className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-indigo-600 opacity-20 rounded-full"></span>
+          <span className="relative">Proceed to Payment</span>
+        </button>
+      </div>
     </div>
   );
 };

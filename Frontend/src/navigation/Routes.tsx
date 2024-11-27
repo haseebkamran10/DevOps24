@@ -4,7 +4,7 @@ import Home from "../views/home/home";
 import Profile from "../views/profile/profile_overview";
 import { Layout } from "./Layout";
 import ProductCatalogPage from "@/views/product-catalogue/product-catalogue-page";
-import LionPainting from "@/views/items/lion-painting";
+import LionPainting from "@/views/items/SingleProductPage";
 import LoginPage from "@/views/login/login";
 import PaymentPage from "@/views/PaymentPage/PaymentPage";
 import WinnerPage from "@/views/WinnerPage/WinnerPage";
@@ -33,7 +33,7 @@ export const routes: RouteObject[] = [
         element: <Profile />,
       },
       {
-        path: "1",
+        path: "SingleProductPage",
         element: <LionPainting />,
       },
       {
