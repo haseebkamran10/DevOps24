@@ -21,13 +21,13 @@ const HomePage = () => {
     },
     {
       name: "Sunset Overdrive",
-      artist: "Artist B",
+      artist: "Haseeb",
       imgSrc: "lion-painting2.jpg",
       link: "/SingleProductPage",
     },
     {
       name: "Abstract Delight",
-      artist: "Artist C",
+      artist: "Fathi",
       imgSrc: "artwork_3.jpg",
       link: "/SingleProductPage",
     },
