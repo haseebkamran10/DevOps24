@@ -5,7 +5,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { useLocation, useNavigate } from "react-router-dom"; // Import useLocation and useNavigate
-import { JSXElementConstructor, Key, ReactElement, ReactNode, ReactPortal, useEffect, useState } from "react";
+import {useEffect, useState } from "react";
 import { GoShare } from "react-icons/go";
 import { IoMdClose } from "react-icons/io";
 import {
