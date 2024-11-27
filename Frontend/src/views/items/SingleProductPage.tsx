@@ -4,8 +4,8 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import Carousel from "@/lib/carousel";
-import { useState } from "react";
+import { useLocation } from "react-router-dom"; // Import useLocation to get the auction data
+import { useEffect, useState } from "react";
 import { FaShieldAlt } from "react-icons/fa";
 import { GoShare } from "react-icons/go";
 import { IoMdClose } from "react-icons/io";
@@ -16,22 +16,14 @@ import {
 } from "react-icons/md";
 import { VscVerified } from "react-icons/vsc";
 
-const slides = ["lion-painting.png", "lion-painting2.jpg"];
-
 function SingleProductPage() {
+  const { state } = useLocation();
+  const auction = state?.auction; // Get the auction data passed from HomePage
   const [isOverlayOpen, setIsOverlayOpen] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [timeRemaining, setTimeRemaining] = useState(""); // Time remaining until auction ends
 
-  const bids = [
-    { time: "16 Sep 2024 15:04", amount: "$250" },
-    { time: "18 Sep 2024 17:43", amount: "$253" },
-    { time: "19 Sep 2024 08:19", amount: "$254" },
-    { time: "20 Sep 2024 12:54", amount: "$254" },
-    { time: "21 Sep 2024 09:32", amount: "$254" },
-    { time: "21 Sep 2024 12:54", amount: "$254" },
-    { time: "21 Sep 2024 15:04", amount: "$254" },
-    { time: "21 Sep 2024 17:43", amount: "$750" },
-  ];
+  const bids = auction?.bids || [];
 
   const toggleOverlay = () => {
     setIsOverlayOpen(!isOverlayOpen);
@@ -41,6 +33,45 @@ function SingleProductPage() {
     setIsFavorite(!isFavorite);
   };
 
+  // Calculate time remaining
+  useEffect(() => {
+    if (!auction?.endTime) return;
+
+    const updateTimeRemaining = () => {
+      const endTime = new Date(auction.endTime).getTime();
+      const now = Date.now();
+      const diff = endTime - now;
+
+      if (diff <= 0) {
+        setTimeRemaining("Auction ended");
+        return;
+      }
+
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+      const minutes = Math.floor((diff / (1000 * 60)) % 60);
+      const seconds = Math.floor((diff / 1000) % 60);
+
+      setTimeRemaining(
+        `${days}d ${hours}h ${minutes}m ${seconds}s`
+      );
+    };
+
+    updateTimeRemaining();
+    const interval = setInterval(updateTimeRemaining, 1000);
+
+    return () => clearInterval(interval);
+  }, [auction?.endTime]);
+
+  if (!auction) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen">
+        <h1 className="text-2xl font-bold">Auction Not Found</h1>
+        <p>Please go back and select a valid auction.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col min-h-screen">
       {/* Content Container */}
@@ -49,7 +80,11 @@ function SingleProductPage() {
           {/* Left Section */}
           <div className="w-full lg:w-2/5 flex flex-col items-center lg:items-start">
             <div className="relative w-full max-w-lg mx-auto lg:mx-0">
-              <Carousel slides={slides} />
+              <img
+                src={auction.artwork.imageUrl}
+                alt={auction.artwork.title}
+                className="h-60 w-full object-cover rounded-lg shadow-md"
+              />
             </div>
           </div>
 
@@ -57,7 +92,9 @@ function SingleProductPage() {
           <div className="w-full lg:w-1/2 mt-4 lg:mt-0 lg:ml-8 grid gap-4">
             {/* Date and Action Buttons */}
             <div className="flex justify-between items-center mb-2 text-center lg:text-left">
-              <p className="text-sm text-gray-500">Sun 22 Sep 2024 12:54</p>
+              <p className="text-sm text-gray-500">
+                Ends At: {new Date(auction.endTime).toLocaleString()}
+              </p>
               <div className="flex items-center">
                 <button className="mr-4 text-2xl">
                   <GoShare />
@@ -68,10 +105,13 @@ function SingleProductPage() {
               </div>
             </div>
             <h1 className="text-xl lg:text-2xl font-bold mb-2 text-center lg:text-left">
-              Lion Magnifiqué
+              {auction.artwork.title}
             </h1>
             <p className="text-gray-500 mb-2 text-center lg:text-left">
-              Water color painting in wood frame
+              {auction.artwork.description}
+            </p>
+            <p className="text-gray-500 mb-2 text-center lg:text-left">
+              Artist: {auction.artwork.artist}
             </p>
 
             {/* Price and Time */}
@@ -79,14 +119,16 @@ function SingleProductPage() {
               <div className="flex items-center">
                 <p className="text-gray-500">Price |</p>
                 <button className="ml-2 underline" onClick={toggleOverlay}>
-                  3 bids
+                  {bids.length} bids
                 </button>
               </div>
               <p className="text-gray-500">Ends in</p>
             </div>
             <div className="flex justify-between mb-2 text-center lg:text-left">
-              <p className="text-xl font-bold">$750</p>
-              <p className="text-gray-500">3 days 22 hours</p>
+              <p className="text-xl font-bold">
+                {auction.currentBid || auction.startingBid} USD
+              </p>
+              <p className="text-gray-500">{timeRemaining}</p>
             </div>
             <p className="flex items-center justify-center lg:justify-start text-gray-500 mb-4">
               $764 including buyer protection
@@ -120,9 +162,9 @@ function SingleProductPage() {
             {/* Seller Info */}
             <div className="grid mt-4">
               <div className="flex items-center mb-2 justify-center lg:justify-start">
-                <p className="font-bold underline mr-4">Marius Picasso</p>
+                <p className="font-bold underline mr-4">{auction.artwork.artist}</p>
                 <img
-                  src="Marius.jpg"
+                  src="Marius.jpg" // Placeholder for seller image
                   className="w-12 h-12 rounded-full border-black border"
                   alt="Seller Profile"
                 />

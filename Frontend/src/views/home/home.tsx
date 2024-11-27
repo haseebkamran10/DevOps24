@@ -169,7 +169,7 @@ const HomePage = () => {
                     <p className="text-sm text-red-400">
                       Ends At: {new Date(auction.endTime).toLocaleString()}
                     </p>
-                    <Link to={`/auction/${auction.auctionId}`}>
+                    <Link to={`/SingleProductPage`}  state={{ auction: auction, }}>
                       <button className="mt-2 bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded text-xs">
                         Bid Now
                       </button>
