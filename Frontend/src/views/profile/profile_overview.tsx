@@ -1,6 +1,4 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { getUserData } from "../../services/UserService";
 import {
   Card,
   CardContent,
@@ -18,55 +16,62 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import { useAuth } from "../../contexts/AuthContext";
 import art1 from "@/assets/art_placeholder1.webp";
 import art2 from "@/assets/art_placeholder2.jpg";
 import art3 from "@/assets/art_placeholder3.png";
+import { getUser, getUserByPhoneNumber } from "../../services/UserService"; // Import the getUser function
 
 const ProfileOverview = () => {
   const [userDetails, setUserDetails] = useState(() => {
-    // Load user details from localStorage on initial render
     const savedDetails = localStorage.getItem("userDetails");
     return savedDetails
       ? JSON.parse(savedDetails)
       : { name: "Guest", email: "guest@example.com", phone: "+00 00000000" };
   });
 
-  const { userName, setUserName } = useAuth(); // Use AuthContext
-  const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchUserDetails = async () => {
-      const token = localStorage.getItem("token");
-      const userId = localStorage.getItem("userId");
-
-      if (!token || !userId) {
-        alert("You are not logged in. Redirecting to login.");
-        navigate("/login");
-        return;
-      }
-
       try {
-        const userData = await getUserData(userId, token);
-        console.log("Fetched user data:", userData);
-
-        const fullName = `${userData.firstName} ${userData.lastName}`;
+        setLoading(true);
+        setError(null);
+  
+        // Retrieve the phone number from localStorage
+        const phoneNumber = localStorage.getItem("phoneNumber");
+        if (!phoneNumber) {
+          throw new Error("No phone number found. Please log in again.");
+        }
+  
+        // Use the phone number to fetch user details
+        const user = await getUserByPhoneNumber(phoneNumber);
         setUserDetails({
-          name: fullName,
-          email: userData.email,
-          phone: userData.phoneNumber || "+00 00000000",
+          name: `${user.firstName} ${user.lastName}`,
+          email: user.email,
+          phone: user.phoneNumber || "+00 00000000",
         });
-
-        setUserName(fullName); // Update AuthContext
-      } catch (error) {
-        console.error("Failed to fetch user data:", error);
-        alert("Unable to fetch user details. Redirecting to login.");
-        navigate("/login");
+  
+        // Save the fetched details to localStorage for later use
+        localStorage.setItem("userDetails", JSON.stringify(user));
+      } catch (err: any) {
+        setError(err.message || "Failed to fetch user details.");
+      } finally {
+        setLoading(false);
       }
     };
-
+  
     fetchUserDetails();
-  }, [navigate, setUserName]);
+  }, []);
+  
+
+  if (loading) {
+    return <p>Loading...</p>;
+  }
+
+  if (error) {
+    return <p className="text-red-500">Error: {error}</p>;
+  }
 
   return (
     <>

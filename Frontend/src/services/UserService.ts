@@ -67,3 +67,33 @@ export const getUser = async (userId: number): Promise<RegisterUserDto> => {
     }
   }
 };
+/**
+ * Fetch user data by phone number.
+ *
+ * @param phoneNumber - The phone number of the user to fetch.
+ * @returns The user data.
+ */
+export const getUserByPhoneNumber = async (
+  phoneNumber: string
+): Promise<RegisterUserDto> => {
+  try {
+    const response = await axios.get<RegisterUserDto>(
+      `https://localhost:5001/api/User/by-phone/${phoneNumber}`,
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    console.log("User fetched successfully:", response.data);
+    return response.data;
+  } catch (error: any) {
+    if (error.response) {
+      console.error("Error fetching user:", error.response.data);
+      throw new Error(error.response.data.message || "Unknown error");
+    } else {
+      console.error("Unexpected error:", error.message);
+      throw new Error("An unexpected error occurred.");
+    }
+  }
+};

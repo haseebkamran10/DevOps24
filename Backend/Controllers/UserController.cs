@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using Backend.Data;
 using Backend.Models;
 using Backend.DTOs;
+using Microsoft.EntityFrameworkCore;
 
 namespace Backend.Controllers
 {
@@ -27,7 +28,7 @@ namespace Backend.Controllers
             {
                 FirstName = userDto.FirstName,
                 LastName = userDto.LastName,
-                Username = userDto.Username ?? userDto.Email, // Default username to email if not provided
+                Username = userDto.Username ?? userDto.Email,
                 Email = userDto.Email,
                 PhoneNumber = userDto.PhoneNumber,
                 AddressLine = userDto.AddressLine,
@@ -58,5 +59,30 @@ namespace Backend.Controllers
             _logger.LogInformation($"User fetched: {user.Username}");
             return Ok(user);
         }
+[HttpGet("by-phone/{phoneNumber}")]
+public async Task<IActionResult> GetUserByPhoneNumber(string phoneNumber)
+{
+    var user = await _context.Users.SingleOrDefaultAsync(u => u.PhoneNumber == phoneNumber);
+    if (user == null)
+    {
+        _logger.LogError($"User not found for phone number: {phoneNumber}");
+        return NotFound("User not found.");
     }
+
+    _logger.LogInformation($"User fetched for phone number: {user.PhoneNumber}");
+    return Ok(new
+    {
+        user.FirstName,
+        user.LastName,
+        user.Username,
+        user.Email,
+        user.PhoneNumber,
+        user.AddressLine,
+        user.City,
+        user.Zip,
+        user.Country
+    });
+}
+
+}
 }

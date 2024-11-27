@@ -5,33 +5,47 @@ import { Menu } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
 import { Sheet, SheetContent, SheetTrigger } from "../components/ui/sheet";
-import { useAuth } from "../contexts/AuthContext";
+import { getUserByPhoneNumber } from "../services/UserService";
+import { endSession } from "../services/SessionService"; 
 import navItems from "./navItems";
 
 const NavigationMenu = () => {
-  const {
-    userName: authUserName,
-    userAvatar,
-    setUserName,
-    setUserAvatar,
-  } = useAuth();
-
-  const userName = authUserName || "Guest";
+  const [userName, setUserName] = useState("Guest");
+  const [userAvatar, setUserAvatar] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const navigate = useNavigate();
 
-  // Handle scroll behavior to hide/show the menu
+  useEffect(() => {
+    const fetchUserDetails = async () => {
+      try {
+        const phoneNumber = localStorage.getItem("phoneNumber"); 
+        if (!phoneNumber) {
+          throw new Error("No phone number found. Please log in again.");
+        }
+
+        const user = await getUserByPhoneNumber(phoneNumber); 
+        setUserName(`${user.firstName} ${user.lastName}`);
+        setUserAvatar(null); 
+      } catch (error: any) {
+        console.error("Failed to fetch user details:", error.message);
+        setUserName("Guest");
+      }
+    };
+
+    fetchUserDetails();
+  }, []);
+
   const handleScroll = () => {
     const currentScrollY = window.scrollY;
 
     if (currentScrollY < 0) return;
 
     if (currentScrollY > lastScrollY) {
-      setIsVisible(false); // Scrolling down
+      setIsVisible(false);
     } else if (currentScrollY < lastScrollY) {
-      setIsVisible(true); // Scrolling up
+      setIsVisible(true); 
     }
 
     setLastScrollY(currentScrollY);
@@ -46,19 +60,30 @@ const NavigationMenu = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [lastScrollY]);
 
-  // Handle Login button click
+
   const handleLoginClick = () => {
     navigate("/login");
   };
 
-  // Handle Logout
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("userName");
-    localStorage.removeItem("userAvatar");
-    setUserName(null);
-    setUserAvatar(null);
-    navigate("/");
+  const handleLogout = async () => {
+    try {
+      const sessionId = localStorage.getItem("sessionId");
+      if (!sessionId) {
+        throw new Error("No session ID found. Please log in again.");
+      }
+
+      await endSession(sessionId);
+      console.log("Session ended successfully.");
+
+
+      localStorage.removeItem("sessionId");
+      localStorage.removeItem("phoneNumber");
+      setUserName("Guest");
+      setUserAvatar(null);
+      navigate("/"); 
+    } catch (error: any) {
+      console.error("Error ending session:", error.message);
+    }
   };
 
   return (
@@ -106,7 +131,7 @@ const NavigationMenu = () => {
         <div className="ml-auto flex items-center space-x-4">
           {userName !== "Guest" ? (
             <div className="flex items-center space-x-4">
-              <Avatar onClick={() => navigate('/profile')} className="cursor-pointer">
+              <Avatar onClick={() => navigate("/profile")} className="cursor-pointer">
                 {userAvatar ? (
                   <AvatarImage src={userAvatar} alt={userName} />
                 ) : (

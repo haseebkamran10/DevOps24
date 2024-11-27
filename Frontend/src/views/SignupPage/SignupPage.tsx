@@ -1,55 +1,57 @@
 import { FormEvent, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { registerUser } from "../../services/registerService"; // Ensure the path is correct
-import {useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { addUser } from "../../services/UserService"; // Ensure the path is correct
+
 const SignupPage = () => {
   const bannerRef = useRef<HTMLImageElement>(null);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [username, setUsername] = useState(""); // Optional username
   const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [address, setAddress] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [addressLine, setAddressLine] = useState("");
   const [city, setCity] = useState("");
   const [zip, setZip] = useState("");
   const [country, setCountry] = useState("");
-  const [password, setPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false); // Add loading state
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const [password, setPassword] = useState(""); // Dummy password
+  const [confirmPassword, setConfirmPassword] = useState(""); // Dummy confirm password
+  const [isLoading, setIsLoading] = useState(false);
 
   const navigate = useNavigate();
 
-
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    navigate("/login");
-  
+
     if (password !== confirmPassword) {
       alert("Passwords do not match.");
       return;
     }
-  
+
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       alert("Please enter a valid email address.");
       return;
     }
-  
+
+    // Construct the user object matching RegisterUserDto
     const user = {
       firstName,
       lastName,
+      username: username || undefined, // Include only if provided
       email,
-      phoneNumber: phone,
-      addressLine: address,
-      city,
-      zip,
+      phoneNumber: phoneNumber || undefined,
+      addressLine: addressLine || undefined,
+      city: city || undefined,
+      zip: zip || undefined,
       country,
-      password,
-      confirmPassword,
     };
-  
+
     setIsLoading(true);
     try {
-      const response = await registerUser(user);
-      alert(`Registration successful! Welcome, ${response.firstName}.`);
+      const response = await addUser(user); // Send only RegisterUserDto fields
+      alert(`Registration successful! Welcome, ${firstName}.`);
+      console.log("Backend Respons" +  response)
+      navigate("/login");
     } catch (error: any) {
       console.error("Registration error:", error.message);
       alert(error.message);
@@ -57,7 +59,6 @@ const SignupPage = () => {
       setIsLoading(false);
     }
   };
-  
 
   return (
     <>
@@ -113,6 +114,22 @@ const SignupPage = () => {
             </div>
             <div>
               <label
+                htmlFor="username"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Username (Optional)
+              </label>
+              <input
+                type="text"
+                id="username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="mt-1 block w-full px-4 py-2 bg-white border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900"
+                placeholder="Enter your username"
+              />
+            </div>
+            <div>
+              <label
                 htmlFor="email"
                 className="block text-sm font-medium text-gray-700"
               >
@@ -130,32 +147,32 @@ const SignupPage = () => {
             </div>
             <div>
               <label
-                htmlFor="phone"
+                htmlFor="phoneNumber"
                 className="block text-sm font-medium text-gray-700"
               >
-                Phone Number
+                Phone Number (Optional)
               </label>
               <input
                 type="tel"
-                id="phone"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+                id="phoneNumber"
+                value={phoneNumber}
+                onChange={(e) => setPhoneNumber(e.target.value)}
                 className="mt-1 block w-full px-4 py-2 bg-white border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900"
                 placeholder="Enter your phone number"
               />
             </div>
             <div>
               <label
-                htmlFor="address"
+                htmlFor="addressLine"
                 className="block text-sm font-medium text-gray-700"
               >
-                Address
+                Address (Optional)
               </label>
               <input
                 type="text"
-                id="address"
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
+                id="addressLine"
+                value={addressLine}
+                onChange={(e) => setAddressLine(e.target.value)}
                 className="mt-1 block w-full px-4 py-2 bg-white border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900"
                 placeholder="Enter your address"
               />
@@ -165,7 +182,7 @@ const SignupPage = () => {
                 htmlFor="city"
                 className="block text-sm font-medium text-gray-700"
               >
-                City
+                City (Optional)
               </label>
               <input
                 type="text"
@@ -181,7 +198,7 @@ const SignupPage = () => {
                 htmlFor="zip"
                 className="block text-sm font-medium text-gray-700"
               >
-                ZIP Code
+                ZIP Code (Optional)
               </label>
               <input
                 type="text"
@@ -206,6 +223,7 @@ const SignupPage = () => {
                 onChange={(e) => setCountry(e.target.value)}
                 className="mt-1 block w-full px-4 py-2 bg-white border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900"
                 placeholder="Enter your country"
+                required
               />
             </div>
             <div>
@@ -226,22 +244,22 @@ const SignupPage = () => {
               />
             </div>
             <div>
-  <label
-    htmlFor="confirmPassword"
-    className="block text-sm font-medium text-gray-700"
-  >
-    Confirm Password
-  </label>
-  <input
-    type="password"
-    id="confirmPassword"
-    value={confirmPassword}
-    onChange={(e) => setConfirmPassword(e.target.value)}
-    className="mt-1 block w-full px-4 py-2 bg-white border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900"
-    placeholder="Confirm your password"
-    required
-  />
-</div>
+              <label
+                htmlFor="confirmPassword"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Confirm Password
+              </label>
+              <input
+                type="password"
+                id="confirmPassword"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="mt-1 block w-full px-4 py-2 bg-white border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900"
+                placeholder="Confirm your password"
+                required
+              />
+            </div>
 
             <button
               type="submit"
