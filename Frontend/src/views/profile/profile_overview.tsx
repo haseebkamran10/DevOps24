@@ -96,6 +96,12 @@ const ProfileOverview = () => {
           <Button className="m-2" type="submit">
             My Items
           </Button>
+          <Link to="/artwork">
+          <Button className="m-2" type="submit">
+           Add Artwork
+          </Button>
+          </Link>
+          
           <Button className="m-2" type="submit">
             Profile Settings
           </Button>
