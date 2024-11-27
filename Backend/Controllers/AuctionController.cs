@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging; // Add this using statement
 using System;
 using System.Linq;
 using System.Threading.Tasks;
@@ -14,10 +15,12 @@ namespace Backend.Controllers
     public class AuctionController : ControllerBase
     {
         private readonly DatabaseContext _context;
+        private readonly ILogger<AuctionController> _logger; // Declare the logger
 
-        public AuctionController(DatabaseContext context)
+        public AuctionController(DatabaseContext context, ILogger<AuctionController> logger) // Inject the logger
         {
             _context = context;
+            _logger = logger;
         }
 
         // Endpoint to start an auction
@@ -99,5 +102,47 @@ namespace Backend.Controllers
 
             return Ok(activeAuctions);
         }
+
+        // Endpoint to end an auction
+[HttpPost("end")]
+public async Task<IActionResult> EndAuctionAsync([FromBody] EndAuctionDto endAuctionDto)
+{
+    if (endAuctionDto.AuctionId <= 0)
+    {
+        return BadRequest("Invalid auction ID.");
+    }
+
+    using var transaction = await _context.Database.BeginTransactionAsync();
+
+    try
+    {
+        // Fetch the auction
+        var auction = await _context.Auctions
+            .FirstOrDefaultAsync(a => a.AuctionId == endAuctionDto.AuctionId);
+
+        if (auction == null)
+        {
+            return NotFound("Auction not found.");
+        }
+
+        // Delete the auction
+        _context.Auctions.Remove(auction);
+
+        // Save changes and commit the transaction
+        await _context.SaveChangesAsync();
+        await transaction.CommitAsync();
+
+        _logger.LogInformation($"Auction {auction.AuctionId} has been successfully removed.");
+        return Ok(new { message = $"Auction {auction.AuctionId} has been removed successfully." });
+    }
+    catch (Exception ex)
+    {
+        await transaction.RollbackAsync();
+        _logger.LogError($"Error removing auction {endAuctionDto.AuctionId}: {ex.Message}");
+        return StatusCode(500, $"An error occurred: {ex.Message}");
+    }
+}
+
+
     }
 }

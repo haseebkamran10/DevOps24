@@ -14,7 +14,8 @@ import {
   MdOutlineStarOutline,
 } from "react-icons/md";
 import { VscVerified } from "react-icons/vsc";
-import { placeBid, getBidsForAuction } from "../../services/BidService"; // Add API functions
+import { placeBid, getBidsForAuction } from "../../services/BidService";
+import  {endAuction} from "../../services/AuctionService";
 
 function SingleProductPage() {
   const { state } = useLocation();
@@ -50,7 +51,7 @@ function SingleProductPage() {
       console.error("Error fetching bids:", error);
     }
   };
-
+  console.log("auction id = "+auction.auctionId)
   const handlePlaceBid = async () => {
     const phoneNumber = localStorage.getItem("phoneNumber");
     const username = localStorage.getItem("username"); // Get username from localStorage
@@ -82,6 +83,10 @@ function SingleProductPage() {
           // Set the auction end date to now (when the user wins)
           const auctionEndDate = new Date().toLocaleDateString();
 
+          // Call the endAuction API to close the auction
+   
+
+          // Navigate to the winners page
           navigate("/winners", {
             state: {
               winnerName: username, // Get username from localStorage
@@ -90,13 +95,16 @@ function SingleProductPage() {
               imageUrl: auction.artwork.imageUrl,
             },
           });
+          console.log(auction.auctionId)
+          const endAuctionResponse = await endAuction({ auctionId: auction.auctionId });
+          console.log("Auction ended:", endAuctionResponse.message);
+
         }
       }
     } catch (error) {
       console.error("Error placing bid:", error);
     }
   };
-  
 
   // Calculate time remaining
   useEffect(() => {

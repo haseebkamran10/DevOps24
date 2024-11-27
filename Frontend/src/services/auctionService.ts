@@ -12,6 +12,11 @@ interface AuctionDto {
   durationHours: number; // Auction duration in hours
 }
 
+// DTO for ending an auction
+interface EndAuctionDto {
+  auctionId: number; // The ID of the auction to close
+}
+
 // Model for active auctions
 export interface ActiveAuction {
   auctionId: number;
@@ -33,7 +38,6 @@ export interface ActiveAuction {
     userId: number;
   };
 }
-
 
 // Response structure for starting an auction
 interface StartAuctionResponse {
@@ -84,6 +88,32 @@ export const getActiveAuctions = async (): Promise<ActiveAuction[]> => {
   } catch (error: any) {
     if (error.response) {
       console.error("Error fetching active auctions:", error.response.data);
+      throw new Error(error.response.data.message || "Unknown error");
+    } else {
+      console.error("Unexpected error:", error.message);
+      throw new Error("An unexpected error occurred.");
+    }
+  }
+};
+
+/**
+ * End an auction by auction ID.
+ *
+ * @param endAuctionDto - The auction ID to be closed.
+ * @returns The response message indicating the result of the auction closure.
+ */
+export const endAuction = async (endAuctionDto: EndAuctionDto): Promise<{ message: string }> => {
+  try {
+    const response = await axios.post<{ message: string }>(`${BASE_URL}/end`, endAuctionDto, {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    console.log("Auction ended successfully:", response.data);
+    return response.data;
+  } catch (error: any) {
+    if (error.response) {
+      console.error("Error ending auction:", error.response.data);
       throw new Error(error.response.data.message || "Unknown error");
     } else {
       console.error("Unexpected error:", error.message);

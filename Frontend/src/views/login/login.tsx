@@ -27,13 +27,14 @@ const LoginPage = () => {
 
       // Fetch user details after the session starts
       const user = await getUserByPhoneNumber(phoneNumber);
+       // Navigate to profile page
+       navigate("/profile");
 
       // Save user details and username in localStorage
       localStorage.setItem("userDetails", JSON.stringify(user));
       localStorage.setItem("username", `${user.firstName} ${user.lastName}`); // Save username
 
-      // Navigate to profile page
-      navigate("/profile");
+     
       
     } catch (err: any) {
       console.error("Login error:", err.message);
