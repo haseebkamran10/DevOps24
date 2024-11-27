@@ -4,9 +4,8 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { useLocation } from "react-router-dom"; // Import useLocation to get the auction data
-import { useEffect, useState } from "react";
-import { FaShieldAlt } from "react-icons/fa";
+import { useLocation, useNavigate } from "react-router-dom"; // Import useLocation and useNavigate
+import { JSXElementConstructor, Key, ReactElement, ReactNode, ReactPortal, useEffect, useState } from "react";
 import { GoShare } from "react-icons/go";
 import { IoMdClose } from "react-icons/io";
 import {
@@ -15,15 +14,18 @@ import {
   MdOutlineStarOutline,
 } from "react-icons/md";
 import { VscVerified } from "react-icons/vsc";
+import { placeBid, getBidsForAuction } from "../../services/BidService"; // Add API functions
 
 function SingleProductPage() {
   const { state } = useLocation();
+  const navigate = useNavigate();
   const auction = state?.auction; // Get the auction data passed from HomePage
   const [isOverlayOpen, setIsOverlayOpen] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState(""); // Time remaining until auction ends
-
-  const bids = auction?.bids || [];
+  const [bids, setBids] = useState(auction?.bids || []);
+  const [bidAmount, setBidAmount] = useState("");
+  const [isBidding, setIsBidding] = useState(false);
 
   const toggleOverlay = () => {
     setIsOverlayOpen(!isOverlayOpen);
@@ -31,6 +33,55 @@ function SingleProductPage() {
 
   const toggleFavorite = () => {
     setIsFavorite(!isFavorite);
+  };
+
+  // Fetch bids for the auction
+  useEffect(() => {
+    if (auction?.auctionId) {
+      fetchBids();
+    }
+  }, [auction?.auctionId]);
+
+  const fetchBids = async () => {
+    try {
+      const fetchedBids = await getBidsForAuction(auction.auctionId);
+      setBids(fetchedBids);
+    } catch (error) {
+      console.error("Error fetching bids:", error);
+    }
+  };
+
+  // Handle bid placement
+  const handlePlaceBid = async () => {
+    if (!bidAmount || isNaN(Number(bidAmount)) || Number(bidAmount) <= 0) {
+      alert("Please enter a valid bid amount.");
+      return;
+    }
+
+    try {
+      const bidData = {
+        phoneNumber: "31856527", // Replace with user phone number
+        auctionId: auction.auctionId,
+        bidAmount: Number(bidAmount),
+      };
+
+      const response = await placeBid(bidData);
+      alert(response.message);
+
+      if (Number(bidAmount) >= auction.secretThreshold) {
+        navigate("/winner", {
+          state: {
+            winnerName: "Your Name", // Replace with user's name
+            itemTitle: auction.artwork.title,
+            auctionEndDate: new Date(auction.endTime).toLocaleDateString(),
+          },
+        });
+      } else {
+        fetchBids();
+      }
+    } catch (error) {
+      console.error("Error placing bid:", error);
+    }
   };
 
   // Calculate time remaining
@@ -116,27 +167,47 @@ function SingleProductPage() {
 
             {/* Price and Time */}
             <div className="flex justify-between mb-2 text-center lg:text-left">
+            <p className="text-red-500">Ends in: {timeRemaining}</p>
               <div className="flex items-center">
-                <p className="text-gray-500">Price |</p>
                 <button className="ml-2 underline" onClick={toggleOverlay}>
                   {bids.length} bids
                 </button>
               </div>
-              <p className="text-gray-500">Ends in</p>
+
             </div>
-            <div className="flex justify-between mb-2 text-center lg:text-left">
-              <p className="text-xl font-bold">
-                {auction.currentBid || auction.startingBid} USD
+            <div>
+                       
+            <p className="text-xl font-bold">
+            Price : {auction.currentBid || auction.startingBid} USD
               </p>
-              <p className="text-gray-500">{timeRemaining}</p>
+              
             </div>
-            <p className="flex items-center justify-center lg:justify-start text-gray-500 mb-4">
-              $764 including buyer protection
-              <FaShieldAlt className="ml-2" />
-            </p>
-            <button className="bg-indigo-700 text-white py-2 px-4 rounded hover:bg-blue-500 active:bg-indigo-700 w-full lg:w-auto">
-              Place a bid
-            </button>
+            {/* Place a Bid */}
+            <div>
+              <button
+                className="bg-indigo-700 text-white py-2 px-4 rounded hover:bg-blue-500 active:bg-indigo-700 w-full lg:w-auto"
+                onClick={() => setIsBidding(!isBidding)}
+              >
+                Place a Bid
+              </button>
+              {isBidding && (
+                <div className="mt-4">
+                  <input
+                    type="number"
+                    placeholder="Enter your bid"
+                    value={bidAmount}
+                    onChange={(e) => setBidAmount(e.target.value)}
+                    className="border border-gray-300 rounded p-2 w-full lg:w-auto"
+                  />
+                  <button
+                    className="bg-green-700 text-white py-2 px-4 rounded hover:bg-green-500 active:bg-green-700 mt-2 w-full lg:w-auto"
+                    onClick={handlePlaceBid}
+                  >
+                    Submit Bid
+                  </button>
+                </div>
+              )}
+            </div>
 
             {/* Accordion */}
             <Accordion type="single" collapsible className="mt-4">
@@ -158,18 +229,18 @@ function SingleProductPage() {
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
-
+            
             {/* Seller Info */}
-            <div className="grid mt-4">
+            <div className="grid mt-2">
               <div className="flex items-center mb-2 justify-center lg:justify-start">
                 <p className="font-bold underline mr-4">{auction.artwork.artist}</p>
                 <img
-                  src="Marius.jpg" // Placeholder for seller image
+                  src="Marius.jpg" 
                   className="w-12 h-12 rounded-full border-black border"
                   alt="Seller Profile"
                 />
               </div>
-              <p className="text-gray-500 mb-2 text-center lg:text-left">
+              <p className="text-gray-500 mb-2 text-center lg:text-right">
                 Rødovre, Denmark
               </p>
 
@@ -197,7 +268,6 @@ function SingleProductPage() {
           </div>
         </div>
       </div>
-
       {/* Conditional Overlay */}
       {isOverlayOpen && (
         <div className="fixed top-32 left-1/2 transform -translate-x-1/2 right-0 bottom-0 border border-gray-300 bg-white rounded-lg shadow-lg w-full sm:w-60 max-h-60 overflow-y-auto z-10 p-4">
@@ -210,11 +280,11 @@ function SingleProductPage() {
             </button>
             <h2 className="mb-2 text-black">Bids</h2>
             <ul className="text-black">
-              {bids.map((bid, index) => (
-                <li key={index}>
-                  <strong>{bid.time}</strong>: {bid.amount}
-                </li>
-              ))}
+            {bids.map((bid) => (
+          <li key={bid.bidId}>
+            {bid.bidAmount} USD at {new Date(bid.bidTime).toLocaleString()}
+          </li>
+        ))}
             </ul>
           </div>
         </div>
