@@ -1,12 +1,15 @@
-import useScrollEffect from "@/lib/useScrollEffect";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import CreateAuctionForm from "../createAuction";
-import CreateAuction from "../createAuction";
+import useScrollEffect from "@/lib/useScrollEffect";
+import { getActiveAuctions, ActiveAuction } from "@/services/AuctionService";
+
 
 const HomePage = () => {
   const bannerRef = useRef<HTMLImageElement>(null);
   const [opacity, setOpacity] = useState(0.7);
+  const [ongoingAuctions, setOngoingAuctions] = useState<ActiveAuction[]>([]);
+  const [loading, setLoading] = useState(true);
+
   useScrollEffect(bannerRef, setOpacity);
 
   const artworks = [
@@ -51,6 +54,20 @@ const HomePage = () => {
     },
   ];
 
+  useEffect(() => {
+    const fetchAuctions = async () => {
+      try {
+        const auctions = await getActiveAuctions();
+        setOngoingAuctions(auctions);
+      } catch (error) {
+        console.error("Failed to fetch ongoing auctions:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAuctions();
+  }, []);
+
   return (
     <>
       <img
@@ -68,6 +85,7 @@ const HomePage = () => {
           </p>
         </div>
 
+        {/* Featured Artworks */}
         <div className="container mx-auto px-5 md:px-10 py-10 md:py-20">
           <h2 className="text-2xl md:text-3xl font-bold mb-6">Featured Artworks</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -95,6 +113,7 @@ const HomePage = () => {
           </div>
         </div>
 
+        {/* Upcoming Auctions */}
         <div className="container mx-auto px-5 md:px-10 py-10 md:py-20">
           <h2 className="text-2xl md:text-3xl font-bold mb-6">Upcoming Auctions</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -117,40 +136,51 @@ const HomePage = () => {
                     </button>
                   </Link>
                 </div>
-
               </div>
             ))}
           </div>
         </div>
+
+        {/* Ongoing Auctions */}
         <div className="container mx-auto px-5 md:px-10 py-10 md:py-20">
-          <h2 className="text-2xl md:text-3xl font-bold mb-6">On-going Auctions</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {artworks.map((art, index) => (
-              <div
-                key={index}
-                className="shadow-lg rounded-lg overflow-hidden w-full max-w-xs mx-auto"
-              >
-                <img
-                  src={art.imgSrc}
-                  alt={art.name}
-                  className="h-60 w-full object-cover"
-                />
-                <div className="p-4 bg-gray-800">
-                  <h3 className="font-bold truncate">{art.name}</h3>
-                  <p className="text-sm truncate">{art.artist}</p>
-                  <Link to={art.link}>
-                    <button className="mt-2 bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded text-xs">
-                      View Details
-                    </button>
-                  </Link>
+          <h2 className="text-2xl md:text-3xl font-bold mb-6">Ongoing Auctions</h2>
+          {loading ? (
+            <p className="text-center">Loading ongoing auctions...</p>
+          ) : ongoingAuctions.length === 0 ? (
+            <p className="text-center">No ongoing auctions at the moment.</p>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {ongoingAuctions.map((auction) => (
+                <div
+                  key={auction.auctionId}
+                  className="shadow-lg rounded-lg overflow-hidden w-full max-w-xs mx-auto"
+                >
+                  <img
+                    src={auction.artwork.imageUrl}
+                    alt={auction.artwork.title}
+                    className="h-60 w-full object-cover"
+                  />
+                  <div className="p-4 bg-gray-800">
+                    <h3 className="font-bold truncate">{auction.artwork.title}</h3>
+                    <p className="text-sm truncate">Artist: {auction.artwork.artist}</p>
+                    <p className="text-sm text-yellow-400">
+                      Current Bid: {auction.currentBid || auction.startingBid} USD
+                    </p>
+                    <p className="text-sm text-red-400">
+                      Ends At: {new Date(auction.endTime).toLocaleString()}
+                    </p>
+                    <Link to={`/auction/${auction.auctionId}`}>
+                      <button className="mt-2 bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded text-xs">
+                        Bid Now
+                      </button>
+                    </Link>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
-
       </div>
-
     </>
   );
 };

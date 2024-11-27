@@ -13,7 +13,7 @@ interface AuctionDto {
 }
 
 // Model for active auctions
-interface ActiveAuction {
+export interface ActiveAuction {
   auctionId: number;
   artworkId: number;
   startingBid: number;
@@ -28,10 +28,12 @@ interface ActiveAuction {
     artworkId: number;
     title: string;
     description: string;
-    imageUrl: string; // Assuming Artwork has an image
+    imageUrl: string;
+    artist: string; // Add this field if available in your API response
     userId: number;
   };
 }
+
 
 // Response structure for starting an auction
 interface StartAuctionResponse {
