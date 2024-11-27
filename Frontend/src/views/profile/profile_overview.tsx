@@ -28,6 +28,7 @@ const ProfileOverview = () => {
       ? JSON.parse(savedDetails)
       : { name: "Guest", email: "guest@example.com", phone: "+00 00000000" };
   });
+  
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -51,6 +52,8 @@ const ProfileOverview = () => {
           email: user.email,
           phone: user.phoneNumber || "+00 00000000",
         });
+        localStorage.setItem("userDetails", JSON.stringify(user));
+
   
         // Save the fetched details to localStorage for later use
         localStorage.setItem("userDetails", JSON.stringify(user));

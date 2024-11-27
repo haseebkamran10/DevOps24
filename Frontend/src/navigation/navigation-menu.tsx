@@ -66,6 +66,12 @@ const NavigationMenu = () => {
   };
 
   const handleLogout = async () => {
+   
+    localStorage.removeItem("sessionId");
+    localStorage.removeItem("phoneNumber");
+    setUserName("Guest");
+    setUserAvatar(null);
+    navigate("/"); 
     try {
       const sessionId = localStorage.getItem("sessionId");
       if (!sessionId) {
@@ -76,11 +82,6 @@ const NavigationMenu = () => {
       console.log("Session ended successfully.");
 
 
-      localStorage.removeItem("sessionId");
-      localStorage.removeItem("phoneNumber");
-      setUserName("Guest");
-      setUserAvatar(null);
-      navigate("/"); 
     } catch (error: any) {
       console.error("Error ending session:", error.message);
     }

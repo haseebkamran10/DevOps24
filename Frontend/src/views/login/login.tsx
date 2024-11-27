@@ -1,6 +1,7 @@
 import { FormEvent, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { startSession } from "../../services/SessionService"; // Ensure the correct path
+import { getUserByPhoneNumber } from "../../services/UserService"; // Import the getUser function
 
 const LoginPage = () => {
   const bannerRef = useRef<HTMLImageElement>(null);
@@ -23,7 +24,17 @@ const LoginPage = () => {
       // Save the session ID and phone number locally
       localStorage.setItem("sessionId", sessionId);
       localStorage.setItem("phoneNumber", phoneNumber);
+
+      // Fetch user details after the session starts
+      const user = await getUserByPhoneNumber(phoneNumber);
+
+      // Save user details and username in localStorage
+      localStorage.setItem("userDetails", JSON.stringify(user));
+      localStorage.setItem("username", `${user.firstName} ${user.lastName}`); // Save username
+
+      // Navigate to profile page
       navigate("/profile");
+      
     } catch (err: any) {
       console.error("Login error:", err.message);
       setError(err.message || "An error occurred during login.");

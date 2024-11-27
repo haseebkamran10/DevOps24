@@ -51,8 +51,15 @@ function SingleProductPage() {
     }
   };
 
-  // Handle bid placement
   const handlePlaceBid = async () => {
+    const phoneNumber = localStorage.getItem("phoneNumber");
+    const username = localStorage.getItem("username"); // Get username from localStorage
+
+    if (!phoneNumber) {
+      alert("You must be logged in to place a bid.");
+      return;
+    }
+
     if (!bidAmount || isNaN(Number(bidAmount)) || Number(bidAmount) <= 0) {
       alert("Please enter a valid bid amount.");
       return;
@@ -60,7 +67,7 @@ function SingleProductPage() {
 
     try {
       const bidData = {
-        phoneNumber: "31856527", // Replace with user phone number
+        phoneNumber,
         auctionId: auction.auctionId,
         bidAmount: Number(bidAmount),
       };
@@ -68,21 +75,28 @@ function SingleProductPage() {
       const response = await placeBid(bidData);
       alert(response.message);
 
-      if (Number(bidAmount) >= auction.secretThreshold) {
-        navigate("/winner", {
-          state: {
-            winnerName: "Your Name", // Replace with user's name
-            itemTitle: auction.artwork.title,
-            auctionEndDate: new Date(auction.endTime).toLocaleDateString(),
-          },
-        });
-      } else {
-        fetchBids();
+      const storedSecretThreshold = localStorage.getItem("secretThreshold");
+      if (storedSecretThreshold) {
+        const threshold = parseFloat(storedSecretThreshold);
+        if (threshold && Number(bidAmount) >= threshold) {
+          // Set the auction end date to now (when the user wins)
+          const auctionEndDate = new Date().toLocaleDateString();
+
+          navigate("/winners", {
+            state: {
+              winnerName: username, // Get username from localStorage
+              itemTitle: auction.artwork.title,
+              auctionEndDate,
+              imageUrl: auction.artwork.imageUrl,
+            },
+          });
+        }
       }
     } catch (error) {
       console.error("Error placing bid:", error);
     }
   };
+  
 
   // Calculate time remaining
   useEffect(() => {

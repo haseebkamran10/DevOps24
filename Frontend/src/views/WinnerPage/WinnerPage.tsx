@@ -1,5 +1,5 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate , useLocation  } from "react-router-dom";
 
 interface WinnerPageProps {
   winnerName?: string;
@@ -7,24 +7,25 @@ interface WinnerPageProps {
   auctionEndDate?: string;
 }
 
-const WinnerPage: React.FC<WinnerPageProps> = ({
-  winnerName = "Lars Sommer",
-  itemTitle = "The Chessboard",
-  auctionEndDate = "29/11 - 2024",
-}) => {
+const WinnerPage: React.FC<WinnerPageProps> = () => {
   const navigate = useNavigate();
+  const location = useLocation();
 
+  // Get the passed state data from the navigation
+  const { winnerName, itemTitle, auctionEndDate, imageUrl } = location.state || {};
+
+  // Navigate to the payment page
   const handleNavigateToPayment = () => {
     navigate("/paymentpage");
   };
-
   return (
     <div className="flex flex-col items-center justify-center p-8 min-h-screen bg-gray-50 font-sans">
       <h1 className="text-4xl font-semibold text-indigo-800 mb-4 text-center animate-pulse">
         🎉 Congratulations, {winnerName}! 🎉
       </h1>
       <img
-        src="/hardCoded pic 1.jpg"
+      
+        src={imageUrl || "/hardCoded pic 1.jpg"}
         alt="Winner Celebration"
         onError={(e) => { e.currentTarget.src = "/placeholder.jpg"; }}
         className="mb-6 w-full max-w-md rounded-3xl shadow-lg"

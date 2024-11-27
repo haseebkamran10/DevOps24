@@ -3,6 +3,7 @@ import DatePicker from "react-datepicker"; // Using a date picker for better UX
 import "react-datepicker/dist/react-datepicker.css"; // Include CSS for DatePicker
 import { createArtwork } from "@/services/ArtworkService";
 import { startAuction } from "@/services/AuctionService";
+import {useNavigate } from "react-router-dom";
 
 function NewAuctionPage() {
   const [step, setStep] = useState(1); // Track current step (1: Artwork, 2: Auction)
@@ -21,6 +22,7 @@ function NewAuctionPage() {
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [startingBid, setStartingBid] = useState("");
   const [secretThreshold, setSecretThreshold] = useState("");
+  const navigate = useNavigate();
 
   // Handle image upload
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -60,26 +62,26 @@ function NewAuctionPage() {
   // Handle Auction Submission
   const handleAuctionSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
+  
     if (!artworkId) {
       alert("No artwork ID found. Please create an artwork first.");
       return;
     }
-
+  
     if (!startDate || !endDate || !startingBid || !secretThreshold) {
       alert("Please fill out all fields.");
       return;
     }
-
+  
     const durationHours = Math.floor(
       (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60)
     );
-
+  
     if (durationHours <= 0) {
       alert("End date must be after the start date.");
       return;
     }
-
+  
     setLoading(true);
     try {
       const response = await startAuction({
@@ -89,7 +91,13 @@ function NewAuctionPage() {
         secretThreshold: parseFloat(secretThreshold),
         durationHours,
       });
+  
+      // Store the secretThreshold and auctionId in localStorage
+      localStorage.setItem("auctionId", response.auctionId.toString());
+      localStorage.setItem("secretThreshold", secretThreshold);
+  
       alert("Auction started successfully! Auction ID: " + response.auctionId);
+      navigate("/"); // Redirect to the homepage after starting the auction
     } catch (error) {
       console.error("Error starting auction:", error);
       alert("Failed to start auction. Please try again.");
@@ -97,7 +105,7 @@ function NewAuctionPage() {
       setLoading(false);
     }
   };
-
+  
   return (
     <div className="w-full mx-auto bg-white flex justify-center px-4 sm:px-6 lg:px-8">
       <form
