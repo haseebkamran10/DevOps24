@@ -2,13 +2,18 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import useScrollEffect from "@/lib/useScrollEffect";
 import { getActiveAuctions, ActiveAuction } from "@/services/AuctionService";
-import Spinner from "../../components/ui/spinner"; // Adjust the path as needed
-import Toast from  "../../components/ui/toast"; // Adjust the path as needed
+import Spinner from "../../components/ui/spinner";
+import Toast from "../../components/ui/toast";
+import { usePersistent } from "../../contexts/PersistentContext";
+
 const HomePage = () => {
   const bannerRef = useRef<HTMLImageElement>(null);
   const [opacity, setOpacity] = useState(0.7);
-  const [ongoingAuctions, setOngoingAuctions] = useState<ActiveAuction[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { getState, setState } = usePersistent(); // Persistent state
+  const [ongoingAuctions, setOngoingAuctions] = useState<ActiveAuction[]>(
+    () => getState("ongoingAuctions") || [] // Load from localStorage if available
+  );
+  const [loading, setLoading] = useState(ongoingAuctions.length === 0);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
   useScrollEffect(bannerRef, setOpacity);
@@ -56,11 +61,14 @@ const HomePage = () => {
   ];
 
   useEffect(() => {
+    if (ongoingAuctions.length > 0) return; // Skip API call if data is already cached
+
     const fetchAuctions = async () => {
       try {
         const auctions = await getActiveAuctions();
         setOngoingAuctions(auctions);
-        setToast({ message: "Auctions are fetched successfully!", type: "success" });
+        setState("ongoingAuctions", auctions); // Persist in localStorage
+        setToast({ message: "Auctions fetched successfully!", type: "success" });
       } catch (error) {
         console.error("Failed to fetch ongoing auctions:", error);
         setToast({ message: "Failed to fetch auctions. Please try again.", type: "error" });
@@ -68,8 +76,9 @@ const HomePage = () => {
         setLoading(false);
       }
     };
+
     fetchAuctions();
-  }, []);
+  }, [setState, getState, ongoingAuctions.length]);
 
   return (
     <>
