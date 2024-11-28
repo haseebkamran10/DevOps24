@@ -1,21 +1,21 @@
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.DependencyInjection;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
 using Backend.Data;
+using Backend.Models;
 
 public class AuctionManagementService : BackgroundService
 {
-    private readonly IServiceProvider _serviceProvider;
+    private readonly IDbContextFactory<DatabaseContext> _dbContextFactory;
     private readonly ILogger<AuctionManagementService> _logger;
 
-    public AuctionManagementService(IServiceProvider serviceProvider, ILogger<AuctionManagementService> logger)
+    public AuctionManagementService(IDbContextFactory<DatabaseContext> dbContextFactory, ILogger<AuctionManagementService> logger)
     {
-        _serviceProvider = serviceProvider;
+        _dbContextFactory = dbContextFactory;
         _logger = logger;
     }
 
@@ -27,17 +27,17 @@ public class AuctionManagementService : BackgroundService
         {
             try
             {
-                using var scope = _serviceProvider.CreateScope();
-                var dbContext = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
+                // Create a new DbContext instance for this iteration
+                using var dbContext = _dbContextFactory.CreateDbContext();
                 var executionStrategy = dbContext.Database.CreateExecutionStrategy();
 
                 await executionStrategy.ExecuteAsync(async () =>
                 {
                     // Fetch auctions that need to be closed
                     var auctionsToClose = await dbContext.Auctions
-                        .Include(a => a.Bids) // Include related bids
+                        .AsNoTracking()
+                        .Include(a => a.Bids)
                         .Where(a => !a.IsClosed && a.EndTime <= DateTime.UtcNow)
-                        .AsNoTracking() // Reduce memory overhead for read-only operations
                         .ToListAsync(stoppingToken);
 
                     if (!auctionsToClose.Any())
@@ -46,58 +46,33 @@ public class AuctionManagementService : BackgroundService
                         return;
                     }
 
-                    // Process auctions in parallel
+                    _logger.LogInformation($"Found {auctionsToClose.Count} auctions to process.");
+
+                    // Limit parallelism to avoid resource exhaustion
+                    const int maxParallelism = 2;
+                    var semaphore = new SemaphoreSlim(maxParallelism);
+
                     var tasks = auctionsToClose.Select(async auction =>
                     {
+                        await semaphore.WaitAsync(stoppingToken);
                         try
                         {
-                            _logger.LogInformation($"Processing auction {auction.AuctionId}");
-
-                            // Reload the auction entity for updates (needed because of AsNoTracking)
-                            var auctionForUpdate = await dbContext.Auctions
-                                .Include(a => a.Bids)
-                                .FirstAsync(a => a.AuctionId == auction.AuctionId, stoppingToken);
-
-                            // Find the winning bid
-                            var winningBid = auctionForUpdate.Bids
-                                .Where(b => b.BidAmount >= auction.MinimumPrice)
-                                .OrderByDescending(b => b.BidAmount)
-                                .FirstOrDefault();
-
-                            if (winningBid != null)
-                            {
-                                // Update auction as closed and set the winning bid
-                                auctionForUpdate.IsClosed = true;
-                                auctionForUpdate.CurrentBid = winningBid.BidAmount;
-                                auctionForUpdate.UpdatedAt = DateTime.UtcNow;
-
-                                _logger.LogInformation($"Auction {auction.AuctionId} ended. Winner: User {winningBid.UserId}, Amount: {winningBid.BidAmount}");
-                            }
-                            else
-                            {
-                                // No valid bids; close the auction without a winner
-                                auctionForUpdate.IsClosed = true;
-                                auctionForUpdate.CurrentBid = null;
-                                auctionForUpdate.UpdatedAt = DateTime.UtcNow;
-
-                                _logger.LogInformation($"Auction {auction.AuctionId} ended with no winners.");
-                            }
+                            await ProcessAuctionAsync(auction, stoppingToken);
                         }
-                        catch (Exception ex)
+                        finally
                         {
-                            _logger.LogError($"Error processing auction {auction.AuctionId}: {ex.Message}");
+                            semaphore.Release();
                         }
                     });
 
                     await Task.WhenAll(tasks);
 
-                    // Save all changes in a single transaction
-                    await dbContext.SaveChangesAsync(stoppingToken);
+                    _logger.LogInformation("Auction processing completed.");
                 });
             }
             catch (Exception ex)
             {
-                _logger.LogError($"An error occurred while processing auctions: {ex.Message}");
+                _logger.LogError($"An error occurred while processing auctions: {ex}");
             }
 
             // Wait for a minute before checking again
@@ -105,5 +80,56 @@ public class AuctionManagementService : BackgroundService
         }
 
         _logger.LogInformation("Auction Management Service is stopping.");
+    }
+
+    private async Task ProcessAuctionAsync(Auction auction, CancellationToken stoppingToken)
+    {
+        // Create a new DbContext instance for processing each auction
+        using var dbContext = _dbContextFactory.CreateDbContext();
+        using var transaction = await dbContext.Database.BeginTransactionAsync(stoppingToken);
+
+        try
+        {
+            // Reload auction with tracking
+            var auctionForUpdate = await dbContext.Auctions
+                .Include(a => a.Bids)
+                .FirstAsync(a => a.AuctionId == auction.AuctionId, stoppingToken);
+
+            // Find the winning bid
+            var winningBid = auctionForUpdate.Bids
+                .Where(b => b.BidAmount >= auction.MinimumPrice)
+                .OrderByDescending(b => b.BidAmount)
+                .FirstOrDefault();
+
+            if (winningBid != null)
+            {
+                // Close auction with a winner if the bid meets or exceeds the minimum price
+                auctionForUpdate.IsClosed = true;
+                auctionForUpdate.CurrentBid = winningBid.BidAmount;
+                auctionForUpdate.UpdatedAt = DateTime.UtcNow;
+
+                _logger.LogInformation($"Auction {auction.AuctionId} ended successfully. Winner: User {winningBid.UserId}, Amount: {winningBid.BidAmount}");
+            }
+            else if (DateTime.UtcNow >= auctionForUpdate.StartTime.AddHours((auctionForUpdate.EndTime - auctionForUpdate.StartTime).TotalHours))
+            {
+                // Close auction without a winner after the specified duration
+                auctionForUpdate.IsClosed = true;
+                auctionForUpdate.CurrentBid = null;
+                auctionForUpdate.UpdatedAt = DateTime.UtcNow;
+
+                _logger.LogInformation($"Auction {auction.AuctionId} ended without a winner.");
+            }
+
+            dbContext.Auctions.Update(auctionForUpdate);
+
+            // Commit transaction
+            await dbContext.SaveChangesAsync(stoppingToken);
+            await transaction.CommitAsync(stoppingToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError($"Error processing auction {auction.AuctionId}: {ex}");
+            await transaction.RollbackAsync(stoppingToken);
+        }
     }
 }
