@@ -71,40 +71,50 @@ function NewAuctionPage() {
     // Handle Auction Submission
     const handleAuctionSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
-  
+    
       if (!artworkId) {
         showToast("No artwork ID found. Please create an artwork first.", "error");
         return;
       }
-  
+    
       if (!startDate || !endDate || !startingBid || !secretThreshold) {
         showToast("Please fill out all fields.", "error");
         return;
       }
-  
+    
+      // Ensure that end date is after the start date
+      if (endDate <= startDate) {
+        showToast("End date must be after the start date.", "error");
+        return;
+      }
+    
+      // Calculate auction duration in hours
       const durationHours = Math.floor(
         (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60)
       );
-  
+    
       if (durationHours <= 0) {
         showToast("End date must be after the start date.", "error");
         return;
       }
-  
+    
+      // Send auction data to the backend
+      const auctionDto = {
+        phoneNumber,
+        artworkId,
+        startingBid: parseFloat(startingBid),
+        secretThreshold: parseFloat(secretThreshold),
+        durationHours, // Send duration in hours
+      };
+    
       setLoading(true);
       try {
-        const response = await startAuction({
-          phoneNumber,
-          artworkId,
-          startingBid: parseFloat(startingBid),
-          secretThreshold: parseFloat(secretThreshold),
-          durationHours,
-        });
-  
+        const response = await startAuction(auctionDto);
+    
         // Store the secretThreshold and auctionId in localStorage
         localStorage.setItem("auctionId", response.auctionId.toString());
         localStorage.setItem("secretThreshold", secretThreshold);
-  
+    
         showToast("Auction started successfully!", "success");
         setTimeout(() => navigate("/"), 2000); // Delay navigation to show success toast
       } catch (error) {
@@ -114,7 +124,8 @@ function NewAuctionPage() {
         setLoading(false);
       }
     };
-  
+    
+
   return (
     <div className="w-full mx-auto bg-white flex justify-center px-4 sm:px-6 lg:px-8">
        {toast && (

@@ -69,7 +69,8 @@ const NavigationMenu = () => {
       const sessionId = localStorage.getItem("sessionId");
       if (!sessionId) {
         throw new Error("No session ID found. Please log in again.");
-      }
+      }localStorage.removeItem("sessionId");
+      localStorage.removeItem("phoneNumber");
 
       await endSession(sessionId);
       console.log("Session ended successfully.");

@@ -15,9 +15,10 @@ import {
 } from "react-icons/md";
 import { VscVerified } from "react-icons/vsc";
 import { placeBid, getBidsForAuction } from "../../services/BidService";
-import  {endAuction} from "../../services/AuctionService";
+import  {endAuction, getActiveAuctions} from "../../services/AuctionService";
 import Spinner from "../../components/ui/spinner"; // Adjust the path as needed
 import Toast from  "../../components/ui/toast"; // Adjust the path as needed
+import { getUser } from "@/services";
 
 function SingleProductPage() {
   const { state } = useLocation();
@@ -45,6 +46,47 @@ function SingleProductPage() {
     setIsFavorite(!isFavorite);
   };
 
+  useEffect(() => {
+    if (!auction?.auctionId || !auction?.endTime) return;
+  
+    const checkAuctionEnd = async () => {
+      const now = new Date();
+      const endDate = new Date(auction.endTime);
+  
+      if (now >= endDate) {
+        // Fetch bids for the auction
+        const allBids = await getBidsForAuction(auction.auctionId);
+  
+        if (allBids.length > 0) {
+          // Find the highest bid
+          const highestBid = allBids.reduce((maxBid, currentBid) =>
+            currentBid.bidAmount > maxBid.bidAmount ? currentBid : maxBid
+          );
+  
+          // Fetch the winner's user information
+          const winner = await getUser(highestBid.userId);
+  
+          // Navigate to the winner's page
+          navigate("/winners", {
+            state: {
+              winnerName: winner.username || `${winner.firstName} ${winner.lastName}`,
+              itemTitle: auction.artwork.title,
+              auctionEndDate: endDate.toLocaleDateString(),
+              imageUrl: auction.artwork.imageUrl,
+            },
+          });
+        } else {
+          setToast({ message: "The auction ended with no bids.", type: "error" });
+        }
+      }
+    };
+  
+    const interval = setInterval(checkAuctionEnd, 1000); // Check every second
+  
+    return () => clearInterval(interval);
+  }, [auction?.auctionId, auction?.endTime, navigate]);
+  
+
   // Fetch bids for the auction
   useEffect(() => {
     if (auction?.auctionId) {
@@ -68,8 +110,7 @@ function SingleProductPage() {
 
   console.log("auction id = "+auction.auctionId)
 
-
- const handlePlaceBid = async () => {
+const handlePlaceBid = async () => {
   const phoneNumber = localStorage.getItem("phoneNumber");
   const username = localStorage.getItem("username");
 
@@ -85,6 +126,45 @@ function SingleProductPage() {
 
   setLoading(true); // Show spinner
   try {
+    // Fetch the auction details using `getActiveAuctions`
+    const activeAuctions = await getActiveAuctions();
+    const currentAuction = activeAuctions.find(a => a.auctionId === auction.auctionId);
+
+    if (!currentAuction) {
+      setToast({ message: "The auction could not be found.", type: "error" });
+      return;
+    }
+
+    const now = new Date();
+    const endDate = new Date(currentAuction.endTime);
+
+    if (now >= endDate) {
+      // Auction has ended, determine the winner
+      const allBids = await getBidsForAuction(auction.auctionId);
+
+      if (allBids.length > 0) {
+        const highestBid = allBids.reduce((maxBid, currentBid) =>
+          currentBid.bidAmount > maxBid.bidAmount ? currentBid : maxBid
+        );
+
+        const winner = await getUser(highestBid.userId);
+
+        // Navigate to the winner's page
+        navigate("/winners", {
+          state: {
+            winnerName: winner.username || `${winner.firstName} ${winner.lastName}`,
+            itemTitle: currentAuction.artwork.title,
+            auctionEndDate: endDate.toLocaleDateString(),
+            imageUrl: currentAuction.artwork.imageUrl,
+          },
+        });
+      } else {
+        setToast({ message: "The auction ended with no bids.", type: "error" });
+      }
+      return;
+    }
+
+    // Proceed with placing the bid if the auction is still active
     const bidData = {
       phoneNumber,
       auctionId: auction.auctionId,
@@ -95,20 +175,22 @@ function SingleProductPage() {
     setToast({ message: response.message, type: "success" }); // Success Toast
     fetchBids(); // Refresh bids after placing a bid
 
+    // Check and handle the secret threshold
     const storedSecretThreshold = localStorage.getItem("secretThreshold");
     if (storedSecretThreshold) {
       const threshold = parseFloat(storedSecretThreshold);
       if (threshold && Number(bidAmount) >= threshold) {
-        const auctionEndDate = new Date().toLocaleDateString();
-        await endAuction({ auctionId: auction.auctionId }); // End the auction
+        // End the auction and navigate to winners page
+        await endAuction({ auctionId: auction.auctionId });
         navigate("/winners", {
           state: {
             winnerName: username,
             itemTitle: auction.artwork.title,
-            auctionEndDate,
+            auctionEndDate: new Date().toLocaleDateString(),
             imageUrl: auction.artwork.imageUrl,
           },
         });
+        return;
       }
     }
   } catch (error) {
@@ -118,6 +200,8 @@ function SingleProductPage() {
     setLoading(false); // Hide spinner
   }
 };
+
+  
 
 
   // Calculate time remaining
