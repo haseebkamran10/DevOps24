@@ -14,7 +14,6 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddHostedService<AuctionManagementService>();
 
-
 // Configure Swagger with JWT authentication
 builder.Services.AddSwaggerGen(c =>
 {
@@ -52,11 +51,11 @@ builder.Services.AddDbContext<DatabaseContext>(options =>
         builder.Configuration.GetConnectionString("DefaultConnection")
     )
     .LogTo(Console.WriteLine, LogLevel.Information)
-    .EnableSensitiveDataLogging()
+    .EnableSensitiveDataLogging() // Disable this in production
     .EnableDetailedErrors()
 );
 
-
+// JWT Authentication
 var jwtKeyBase64 = builder.Configuration["Jwt:Key"];
 if (string.IsNullOrWhiteSpace(jwtKeyBase64))
 {
@@ -66,13 +65,11 @@ if (string.IsNullOrWhiteSpace(jwtKeyBase64))
 byte[] jwtKeyBytes;
 try
 {
-    // Forsøg at dekode Base64
     jwtKeyBytes = Convert.FromBase64String(jwtKeyBase64);
     Console.WriteLine("JWT Secret decoded from Base64.");
 }
 catch (FormatException)
 {
-    // Hvis dekodning fejler, brug den som almindelig tekst
     Console.WriteLine("JWT Secret is not Base64-encoded. Using it as plain text.");
     jwtKeyBytes = Encoding.UTF8.GetBytes(jwtKeyBase64);
 }
@@ -83,16 +80,19 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(jwtKeyBytes), // Bruger korrekt nøgle
+            IssuerSigningKey = new SymmetricSecurityKey(jwtKeyBytes),
             ValidateIssuer = true,
-            ValidIssuer = builder.Configuration["Jwt:Issuer"], // Skal matche `iss` claim i token
-            ValidateAudience = false, // Ændr til `true`, hvis `aud` skal verificeres
-            ClockSkew = TimeSpan.Zero // Undgå tidsforskelle
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidateAudience = false,
+            ClockSkew = TimeSpan.Zero
         };
     });
 
+// Stripe Configuration
+builder.Services.Configure<StripeSettings>(builder.Configuration.GetSection("Stripe"));
+Stripe.StripeConfiguration.ApiKey = builder.Configuration["Stripe:SecretKey"];
 
-// Configure CORS
+// CORS Configuration
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
