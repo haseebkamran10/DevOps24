@@ -8,10 +8,12 @@
       "path": "./tsconfig.node.json"
     }
   ],
-  "compilerOptions": {
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["./src/*"]
+    "compilerOptions": {
+      "types": ["vitest", "node"], // Add 'vitest' here
+      "baseUrl": "./",
+      "paths": {
+        "@/*": ["src/*"]
+      }
     }
   }
-}
+  

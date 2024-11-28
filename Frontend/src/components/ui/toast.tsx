@@ -27,6 +27,7 @@ const Toast: React.FC<ToastProps> = ({
 
   return (
     <div
+      role="alert" // Add role here for accessibility
       className={`fixed top-5 left-1/2 transform -translate-x-1/2 px-6 py-4 rounded-md shadow-lg transition-transform duration-300 ease-in-out ${
         type === "success"
           ? "bg-green-100 text-green-800 border border-green-300"
@@ -83,5 +84,6 @@ const Toast: React.FC<ToastProps> = ({
     </div>
   );
 };
+
 
 export default Toast;
