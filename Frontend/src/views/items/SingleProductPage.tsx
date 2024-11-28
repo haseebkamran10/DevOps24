@@ -16,6 +16,8 @@ import {
 import { VscVerified } from "react-icons/vsc";
 import { placeBid, getBidsForAuction } from "../../services/BidService";
 import  {endAuction} from "../../services/AuctionService";
+import Spinner from "../../components/ui/spinner"; // Adjust the path as needed
+import Toast from  "../../components/ui/toast"; // Adjust the path as needed
 
 function SingleProductPage() {
   const { state } = useLocation();
@@ -27,6 +29,13 @@ function SingleProductPage() {
   const [bids, setBids] = useState(auction?.bids || []);
   const [bidAmount, setBidAmount] = useState("");
   const [isBidding, setIsBidding] = useState(false);
+  const [loading, setLoading] = useState(false); // For Spinner
+  const [toast, setToast] = useState<{ message: string; type?: "success" | "error" }>({
+    message: "",
+    type: "success",
+  });
+  
+ 
 
   const toggleOverlay = () => {
     setIsOverlayOpen(!isOverlayOpen);
@@ -44,67 +53,72 @@ function SingleProductPage() {
   }, [auction?.auctionId]);
 
   const fetchBids = async () => {
+    setLoading(true); // Show spinner
     try {
       const fetchedBids = await getBidsForAuction(auction.auctionId);
       setBids(fetchedBids);
+      //setToast({ message: "Bids fetched successfully.", type: "success" }); // Success Toast
     } catch (error) {
       console.error("Error fetching bids:", error);
+      setToast({ message: "Failed to fetch bids.", type: "error" }); // Error Toast
+    } finally {
+      setLoading(false); // Hide spinner
     }
   };
+
   console.log("auction id = "+auction.auctionId)
-  const handlePlaceBid = async () => {
-    const phoneNumber = localStorage.getItem("phoneNumber");
-    const username = localStorage.getItem("username"); // Get username from localStorage
 
-    if (!phoneNumber) {
-      alert("You must be logged in to place a bid.");
-      return;
-    }
 
-    if (!bidAmount || isNaN(Number(bidAmount)) || Number(bidAmount) <= 0) {
-      alert("Please enter a valid bid amount.");
-      return;
-    }
+ const handlePlaceBid = async () => {
+  const phoneNumber = localStorage.getItem("phoneNumber");
+  const username = localStorage.getItem("username");
 
-    try {
-      const bidData = {
-        phoneNumber,
-        auctionId: auction.auctionId,
-        bidAmount: Number(bidAmount),
-      };
+  if (!phoneNumber) {
+    setToast({ message: "You must be logged in to place a bid.", type: "error" });
+    return;
+  }
 
-      const response = await placeBid(bidData);
-      alert(response.message);
+  if (!bidAmount || isNaN(Number(bidAmount)) || Number(bidAmount) <= 0) {
+    setToast({ message: "Please enter a valid bid amount.", type: "error" });
+    return;
+  }
 
-      const storedSecretThreshold = localStorage.getItem("secretThreshold");
-      if (storedSecretThreshold) {
-        const threshold = parseFloat(storedSecretThreshold);
-        if (threshold && Number(bidAmount) >= threshold) {
-          // Set the auction end date to now (when the user wins)
-          const auctionEndDate = new Date().toLocaleDateString();
+  setLoading(true); // Show spinner
+  try {
+    const bidData = {
+      phoneNumber,
+      auctionId: auction.auctionId,
+      bidAmount: Number(bidAmount),
+    };
 
-          // Call the endAuction API to close the auction
-   
+    const response = await placeBid(bidData);
+    setToast({ message: response.message, type: "success" }); // Success Toast
+    fetchBids(); // Refresh bids after placing a bid
 
-          // Navigate to the winners page
-          navigate("/winners", {
-            state: {
-              winnerName: username, // Get username from localStorage
-              itemTitle: auction.artwork.title,
-              auctionEndDate,
-              imageUrl: auction.artwork.imageUrl,
-            },
-          });
-          console.log(auction.auctionId)
-          const endAuctionResponse = await endAuction({ auctionId: auction.auctionId });
-          console.log("Auction ended:", endAuctionResponse.message);
-
-        }
+    const storedSecretThreshold = localStorage.getItem("secretThreshold");
+    if (storedSecretThreshold) {
+      const threshold = parseFloat(storedSecretThreshold);
+      if (threshold && Number(bidAmount) >= threshold) {
+        const auctionEndDate = new Date().toLocaleDateString();
+        await endAuction({ auctionId: auction.auctionId }); // End the auction
+        navigate("/winners", {
+          state: {
+            winnerName: username,
+            itemTitle: auction.artwork.title,
+            auctionEndDate,
+            imageUrl: auction.artwork.imageUrl,
+          },
+        });
       }
-    } catch (error) {
-      console.error("Error placing bid:", error);
     }
-  };
+  } catch (error) {
+    console.error("Error placing bid:", error);
+    setToast({ message: "Failed to place bid.", type: "error" }); // Error Toast
+  } finally {
+    setLoading(false); // Hide spinner
+  }
+};
+
 
   // Calculate time remaining
   useEffect(() => {
@@ -147,6 +161,17 @@ function SingleProductPage() {
 
   return (
     <div className="flex flex-col min-h-screen">
+         {/* Show Spinner */}
+    {loading && <Spinner />}
+
+{/* Show Toast Notifications */}
+{toast.message && (
+  <Toast
+    message={toast.message}
+    type={toast.type}
+    onClose={() => setToast({ message: "", type: "success" })}
+  />
+)}
       {/* Content Container */}
       <div className="flex flex-col lg:flex-row justify-center items-center flex-grow p-4 lg:p-8">
         <div className="w-full lg:w-4/5 flex flex-col lg:flex-row justify-between">
@@ -290,27 +315,39 @@ function SingleProductPage() {
           </div>
         </div>
       </div>
-      {/* Conditional Overlay */}
       {isOverlayOpen && (
-        <div className="fixed top-32 left-1/2 transform -translate-x-1/2 right-0 bottom-0 border border-gray-300 bg-white rounded-lg shadow-lg w-full sm:w-60 max-h-60 overflow-y-auto z-10 p-4">
-          <div className="text-center">
-            <button
-              className="absolute top-4 right-4 text-xl text-black"
-              onClick={toggleOverlay}
-            >
-              <IoMdClose />
-            </button>
-            <h2 className="mb-2 text-black">Bids</h2>
-            <ul className="text-black">
+  <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
+    <div className="bg-white w-full max-w-sm mx-auto rounded-xl shadow-lg overflow-hidden">
+      {/* Header */}
+      <div className="px-4 py-3 border-b border-gray-200 flex justify-between items-center">
+        <h2 className="text-lg font-semibold text-gray-700">Bids</h2>
+        <button
+          className="text-gray-500 hover:text-gray-800"
+          onClick={toggleOverlay}
+        >
+          <IoMdClose size={20} />
+        </button>
+      </div>
+
+      {/* Content */}
+      <div className="p-4 max-h-72 overflow-y-auto">
+        {bids.length > 0 ? (
+          <ul className="divide-y divide-gray-200">
             {bids.map((bid) => (
-          <li key={bid.bidId}>
-            {bid.bidAmount} USD at {new Date(bid.bidTime).toLocaleString()}
-          </li>
-        ))}
-            </ul>
-          </div>
-        </div>
-      )}
+              <li key={bid.bidId} className="py-3 flex justify-between items-center">
+                <span className="text-gray-800 font-medium">{bid.bidAmount} USD</span>
+                <span className="text-gray-500 text-sm">{new Date(bid.bidTime).toLocaleString()}</span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-gray-500 text-sm text-center">No bids available</p>
+        )}
+      </div>
+    </div>
+  </div>
+)}
+
     </div>
   );
 }

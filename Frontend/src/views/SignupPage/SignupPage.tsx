@@ -2,6 +2,9 @@ import { FormEvent, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import { addUser } from "../../services/UserService"; // Ensure the path is correct
+import Spinner from "../../components/ui/spinner"; // Adjust the path as needed
+import Toast from  "../../components/ui/toast"; // Adjust the path as needed
+
 
 const SignupPage = () => {
   const bannerRef = useRef<HTMLImageElement>(null);
@@ -17,27 +20,33 @@ const SignupPage = () => {
   const [password, setPassword] = useState(""); // Dummy password
   const [confirmPassword, setConfirmPassword] = useState(""); // Dummy confirm password
   const [isLoading, setIsLoading] = useState(false);
+  const [loading, setLoading] = useState(false); // For Spinner
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
   const navigate = useNavigate();
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+  const showToast = (message: string, type: "success" | "error") => {
+    setToast(null);
+    setTimeout(() => setToast({ message, type }), 50); 
+  };
+
+ const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     if (password !== confirmPassword) {
-      alert("Passwords do not match.");
+      showToast("Passwords do not match.", "error");
       return;
     }
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      alert("Please enter a valid email address.");
+      showToast("Please enter a valid email address.", "error");
       return;
     }
 
-    // Construct the user object matching RegisterUserDto
     const user = {
       firstName,
       lastName,
-      username: username || undefined, // Include only if provided
+      username: username || undefined,
       email,
       phoneNumber: phoneNumber || undefined,
       addressLine: addressLine || undefined,
@@ -47,14 +56,17 @@ const SignupPage = () => {
     };
 
     setIsLoading(true);
+
     try {
-      const response = await addUser(user); // Send only RegisterUserDto fields
-      alert(`Registration successful! Welcome, ${firstName}.`);
-      console.log("Backend Respons" +  response)
-      navigate("/login");
+      await addUser(user);
+      showToast(`Registration successful! Welcome, ${firstName}.`, "success");
+
+        setTimeout(() => {
+        navigate("/login");
+      }, 2000);
     } catch (error: any) {
       console.error("Registration error:", error.message);
-      alert(error.message);
+      showToast(error.message || "Registration failed. Please try again.", "error");
     } finally {
       setIsLoading(false);
     }
@@ -62,6 +74,13 @@ const SignupPage = () => {
 
   return (
     <>
+     {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
       <img
         ref={bannerRef}
         src="login_banner.jpg"
@@ -270,7 +289,7 @@ const SignupPage = () => {
               } focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all`}
               disabled={isLoading}
             >
-              {isLoading ? "Registering..." : "Sign Up"}
+               {isLoading ? <Spinner /> : "Sign Up"}
             </button>
           </form>
           <p className="mt-6 text-center text-sm text-gray-600">

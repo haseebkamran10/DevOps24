@@ -4,11 +4,14 @@ import "react-datepicker/dist/react-datepicker.css"; // Include CSS for DatePick
 import { createArtwork } from "@/services/ArtworkService";
 import { startAuction } from "@/services/AuctionService";
 import {useNavigate } from "react-router-dom";
+import Spinner from "../components/ui/spinner"; // Adjust the path as needed
+import Toast from  "../components/ui/toast"; // Adjust the path as needed
 
 function NewAuctionPage() {
   const [step, setStep] = useState(1); // Track current step (1: Artwork, 2: Auction)
   const [artworkId, setArtworkId] = useState<number | null>(null); // Store artwork ID
   const [loading, setLoading] = useState(false); // Loading state
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
   // Artwork form state
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -24,90 +27,103 @@ function NewAuctionPage() {
   const [secretThreshold, setSecretThreshold] = useState("");
   const navigate = useNavigate();
 
-  // Handle image upload
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) setImage(file);
+   // Show toast utility
+   const showToast = (message: string, type: "success" | "error") => {
+    setToast(null); // Clear any existing toast
+    setTimeout(() => setToast({ message, type }), 50); // Slight delay to ensure re-render
   };
 
-  // Handle Artwork Submission
-  const handleArtworkSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!image) {
-      alert("Please upload an image.");
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const response = await createArtwork({
-        phoneNumber,
-        title,
-        description,
-        artist,
-        imageFile: image,
-      });
-      setArtworkId(response.artworkId); // Store artwork ID
-      setStep(2); // Move to the next step
-      alert("Artwork created successfully!");
-    } catch (error) {
-      console.error("Error creating artwork:", error);
-      alert("Failed to create artwork. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Handle Auction Submission
-  const handleAuctionSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+    // Handle image upload
+    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (file) setImage(file);
+    };
   
-    if (!artworkId) {
-      alert("No artwork ID found. Please create an artwork first.");
-      return;
-    }
+    // Handle Artwork Submission
+    const handleArtworkSubmit = async (e: React.FormEvent) => {
+      e.preventDefault();
   
-    if (!startDate || !endDate || !startingBid || !secretThreshold) {
-      alert("Please fill out all fields.");
-      return;
-    }
+      if (!image) {
+        showToast("Please upload an image.", "error");
+        return;
+      }
   
-    const durationHours = Math.floor(
-      (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60)
-    );
+      setLoading(true);
+      try {
+        const response = await createArtwork({
+          phoneNumber,
+          title,
+          description,
+          artist,
+          imageFile: image,
+        });
+        setArtworkId(response.artworkId); // Store artwork ID
+        setStep(2); // Move to the next step
+        showToast("Artwork created successfully!", "success");
+      } catch (error) {
+        console.error("Error creating artwork:", error);
+        showToast("Failed to create artwork. Please try again.", "error");
+      } finally {
+        setLoading(false);
+      }
+    };
   
-    if (durationHours <= 0) {
-      alert("End date must be after the start date.");
-      return;
-    }
+    // Handle Auction Submission
+    const handleAuctionSubmit = async (e: React.FormEvent) => {
+      e.preventDefault();
   
-    setLoading(true);
-    try {
-      const response = await startAuction({
-        phoneNumber,
-        artworkId,
-        startingBid: parseFloat(startingBid),
-        secretThreshold: parseFloat(secretThreshold),
-        durationHours,
-      });
+      if (!artworkId) {
+        showToast("No artwork ID found. Please create an artwork first.", "error");
+        return;
+      }
   
-      // Store the secretThreshold and auctionId in localStorage
-      localStorage.setItem("auctionId", response.auctionId.toString());
-      localStorage.setItem("secretThreshold", secretThreshold);
+      if (!startDate || !endDate || !startingBid || !secretThreshold) {
+        showToast("Please fill out all fields.", "error");
+        return;
+      }
   
-      alert("Auction started successfully! Auction ID: " + response.auctionId);
-      navigate("/"); // Redirect to the homepage after starting the auction
-    } catch (error) {
-      console.error("Error starting auction:", error);
-      alert("Failed to start auction. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
+      const durationHours = Math.floor(
+        (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60)
+      );
+  
+      if (durationHours <= 0) {
+        showToast("End date must be after the start date.", "error");
+        return;
+      }
+  
+      setLoading(true);
+      try {
+        const response = await startAuction({
+          phoneNumber,
+          artworkId,
+          startingBid: parseFloat(startingBid),
+          secretThreshold: parseFloat(secretThreshold),
+          durationHours,
+        });
+  
+        // Store the secretThreshold and auctionId in localStorage
+        localStorage.setItem("auctionId", response.auctionId.toString());
+        localStorage.setItem("secretThreshold", secretThreshold);
+  
+        showToast("Auction started successfully!", "success");
+        setTimeout(() => navigate("/"), 2000); // Delay navigation to show success toast
+      } catch (error) {
+        console.error("Error starting auction:", error);
+        showToast("Failed to start auction. Please try again.", "error");
+      } finally {
+        setLoading(false);
+      }
+    };
   
   return (
     <div className="w-full mx-auto bg-white flex justify-center px-4 sm:px-6 lg:px-8">
+       {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
       <form
         onSubmit={step === 1 ? handleArtworkSubmit : handleAuctionSubmit}
         className="border rounded-3xl w-full max-w-3xl p-6 sm:p-8 m-8 bg-gray-100 shadow-lg"
@@ -189,7 +205,7 @@ function NewAuctionPage() {
               className="w-full bg-indigo-600 text-white font-semibold py-3 px-4 rounded-lg hover:bg-indigo-700 transition focus:outline-none focus:ring-2 focus:ring-blue-500 mt-6"
               disabled={loading}
             >
-              {loading ? "Creating Artwork..." : "Create Artwork"}
+              {loading ? <Spinner /> : "Create Artwork"}
             </button>
           </>
         ) : (
@@ -256,7 +272,7 @@ function NewAuctionPage() {
               className="w-full bg-indigo-600 text-white font-semibold py-3 px-4 rounded-lg hover:bg-indigo-700 transition focus:outline-none focus:ring-2 focus:ring-blue-500 mt-6"
               disabled={loading}
             >
-              {loading ? "Starting Auction..." : "Start Auction"}
+               {loading ? <Spinner /> : "Start Auction"}
             </button>
           </>
         )}

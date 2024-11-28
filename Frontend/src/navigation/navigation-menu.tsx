@@ -6,7 +6,7 @@ import { Button } from "../components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
 import { Sheet, SheetContent, SheetTrigger } from "../components/ui/sheet";
 import { getUserByPhoneNumber } from "../services/UserService";
-import { endSession } from "../services/SessionService"; 
+import { endSession } from "../services/SessionService";
 import navItems from "./navItems";
 
 const NavigationMenu = () => {
@@ -20,14 +20,14 @@ const NavigationMenu = () => {
   useEffect(() => {
     const fetchUserDetails = async () => {
       try {
-        const phoneNumber = localStorage.getItem("phoneNumber"); 
+        const phoneNumber = localStorage.getItem("phoneNumber");
         if (!phoneNumber) {
           throw new Error("No phone number found. Please log in again.");
         }
 
-        const user = await getUserByPhoneNumber(phoneNumber); 
+        const user = await getUserByPhoneNumber(phoneNumber);
         setUserName(`${user.firstName} ${user.lastName}`);
-        setUserAvatar(null); 
+        setUserAvatar(null); // Update to user's avatar URL if available
       } catch (error: any) {
         console.error("Failed to fetch user details:", error.message);
         setUserName("Guest");
@@ -45,7 +45,7 @@ const NavigationMenu = () => {
     if (currentScrollY > lastScrollY) {
       setIsVisible(false);
     } else if (currentScrollY < lastScrollY) {
-      setIsVisible(true); 
+      setIsVisible(true);
     }
 
     setLastScrollY(currentScrollY);
@@ -60,18 +60,11 @@ const NavigationMenu = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [lastScrollY]);
 
-
   const handleLoginClick = () => {
     navigate("/login");
   };
 
   const handleLogout = async () => {
-   
-    localStorage.removeItem("sessionId");
-    localStorage.removeItem("phoneNumber");
-    setUserName("Guest");
-    setUserAvatar(null);
-    navigate("/"); 
     try {
       const sessionId = localStorage.getItem("sessionId");
       if (!sessionId) {
@@ -80,10 +73,14 @@ const NavigationMenu = () => {
 
       await endSession(sessionId);
       console.log("Session ended successfully.");
-
-
     } catch (error: any) {
       console.error("Error ending session:", error.message);
+    } finally {
+      localStorage.removeItem("sessionId");
+      localStorage.removeItem("phoneNumber");
+      setUserName("Guest");
+      setUserAvatar(null);
+      navigate("/");
     }
   };
 
@@ -134,7 +131,7 @@ const NavigationMenu = () => {
             <div className="flex items-center space-x-4">
               <Avatar onClick={() => navigate("/profile")} className="cursor-pointer">
                 {userAvatar ? (
-                  <AvatarImage src="/Frontend/src/assets/batman.png" alt={userName} />
+                  <AvatarImage src={userAvatar} alt={userName} />
                 ) : (
                   <AvatarFallback>{userName.charAt(0).toUpperCase()}</AvatarFallback>
                 )}
@@ -197,7 +194,7 @@ const NavigationMenu = () => {
                         ))}
                       </div>
                     )}
-                  </React.Fragment>
+                </React.Fragment>
                 ))}
                 {userName !== "Guest" ? (
                   <Button variant="ghost" onClick={handleLogout}>

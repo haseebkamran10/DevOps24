@@ -2,13 +2,14 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import useScrollEffect from "@/lib/useScrollEffect";
 import { getActiveAuctions, ActiveAuction } from "@/services/AuctionService";
-
-
+import Spinner from "../../components/ui/spinner"; // Adjust the path as needed
+import Toast from  "../../components/ui/toast"; // Adjust the path as needed
 const HomePage = () => {
   const bannerRef = useRef<HTMLImageElement>(null);
   const [opacity, setOpacity] = useState(0.7);
   const [ongoingAuctions, setOngoingAuctions] = useState<ActiveAuction[]>([]);
   const [loading, setLoading] = useState(true);
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
   useScrollEffect(bannerRef, setOpacity);
 
@@ -59,8 +60,10 @@ const HomePage = () => {
       try {
         const auctions = await getActiveAuctions();
         setOngoingAuctions(auctions);
+        setToast({ message: "Auctions are fetched successfully!", type: "success" });
       } catch (error) {
         console.error("Failed to fetch ongoing auctions:", error);
+        setToast({ message: "Failed to fetch auctions. Please try again.", type: "error" });
       } finally {
         setLoading(false);
       }
@@ -145,7 +148,9 @@ const HomePage = () => {
         <div className="container mx-auto px-5 md:px-10 py-10 md:py-20">
           <h2 className="text-2xl md:text-3xl font-bold mb-6">Ongoing Auctions</h2>
           {loading ? (
-            <p className="text-center">Loading ongoing auctions...</p>
+            <div className="flex justify-center">
+              <Spinner />
+            </div>
           ) : ongoingAuctions.length === 0 ? (
             <p className="text-center">No ongoing auctions at the moment.</p>
           ) : (
@@ -169,7 +174,10 @@ const HomePage = () => {
                     <p className="text-sm text-red-400">
                       Ends At: {new Date(auction.endTime).toLocaleString()}
                     </p>
-                    <Link to={`/SingleProductPage`}  state={{ auction: auction, }}>
+                    <Link
+                      to={`/SingleProductPage`}
+                      state={{ auction: auction }}
+                    >
                       <button className="mt-2 bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded text-xs">
                         Bid Now
                       </button>
@@ -181,6 +189,13 @@ const HomePage = () => {
           )}
         </div>
       </div>
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
     </>
   );
 };

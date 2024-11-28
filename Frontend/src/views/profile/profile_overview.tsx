@@ -19,7 +19,9 @@ import {
 import art1 from "@/assets/art_placeholder1.webp";
 import art2 from "@/assets/art_placeholder2.jpg";
 import art3 from "@/assets/art_placeholder3.png";
-import { getUserByPhoneNumber } from "../../services/UserService"; // Import the getUser function
+import { getUserByPhoneNumber } from "../../services/UserService";
+import Spinner from "../../components/ui/spinner"; // Adjust the path as needed
+import Toast from  "../../components/ui/toast"; // Adjust the path as needed
 
 const ProfileOverview = () => {
   const [userDetails, setUserDetails] = useState(() => {
@@ -28,52 +30,48 @@ const ProfileOverview = () => {
       ? JSON.parse(savedDetails)
       : { name: "Guest", email: "guest@example.com", phone: "+00 00000000" };
   });
-  
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
   useEffect(() => {
     const fetchUserDetails = async () => {
       try {
         setLoading(true);
         setError(null);
-  
-        // Retrieve the phone number from localStorage
+
         const phoneNumber = localStorage.getItem("phoneNumber");
         if (!phoneNumber) {
           throw new Error("No phone number found. Please log in again.");
         }
-  
-        // Use the phone number to fetch user details
+
         const user = await getUserByPhoneNumber(phoneNumber);
         setUserDetails({
           name: `${user.firstName} ${user.lastName}`,
           email: user.email,
           phone: user.phoneNumber || "+00 00000000",
         });
-        localStorage.setItem("userDetails", JSON.stringify(user));
 
-  
-        // Save the fetched details to localStorage for later use
         localStorage.setItem("userDetails", JSON.stringify(user));
+        setToast({ message: "User details loaded successfully!", type: "success" });
       } catch (err: any) {
         setError(err.message || "Failed to fetch user details.");
+        setToast({ message: err.message || "Failed to fetch user details.", type: "error" });
       } finally {
         setLoading(false);
       }
     };
-  
+
     fetchUserDetails();
   }, []);
-  
 
   if (loading) {
-    return <p>Loading...</p>;
-  }
-
-  if (error) {
-    return <p className="text-red-500">Error: {error}</p>;
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <Spinner />
+      </div>
+    );
   }
 
   return (
@@ -93,23 +91,22 @@ const ProfileOverview = () => {
           <CardDescription>{userDetails.phone}</CardDescription>
         </CardHeader>
         <CardContent>
-          <Button className="m-2" type="submit">
+          <Button className="m-2" type="button">
             Favorited Auctions
           </Button>
-          <Button className="m-2" type="submit">
+          <Button className="m-2" type="button">
             My Items
           </Button>
           <Link to="/artwork">
-          <Button className="m-2" type="submit">
-           Add Artwork
-          </Button>
+            <Button className="m-2" type="button">
+              Add Artwork
+            </Button>
           </Link>
-          
-          <Button className="m-2" type="submit">
+          <Button className="m-2" type="button">
             Profile Settings
           </Button>
           <Link to="/new-auction">
-            <Button className="m-2" type="submit">
+            <Button className="m-2" type="button">
               New Auction
             </Button>
           </Link>
@@ -158,6 +155,14 @@ const ProfileOverview = () => {
         </CardContent>
         <CardFooter></CardFooter>
       </Card>
+
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
     </>
   );
 };
