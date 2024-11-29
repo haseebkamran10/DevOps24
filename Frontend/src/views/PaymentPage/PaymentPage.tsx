@@ -1,3 +1,4 @@
+import Spinner from '@/components/ui/spinner';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -299,7 +300,7 @@ const PaymentPage: React.FC<PaymentPageProps> = ({ totalAmount, itemTitle }) => 
               type="submit"
               className="w-full mt-6 bg-indigo-600 text-white py-3 rounded-md font-bold hover:bg-indigo-700 transition duration-200"
             >
-              Confirm Payment
+              Confirm Payment 
             </button>
           </form>
 

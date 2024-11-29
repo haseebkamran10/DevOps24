@@ -12,6 +12,7 @@ namespace Backend.Data
         public DbSet<Bid> Bids { get; set; }
         public DbSet<Artwork> Artworks { get; set; }
         public DbSet<Session> Sessions { get; set; } // Declare the DbSet for Sessions
+        public DbSet<Payment> payments { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -36,6 +37,19 @@ namespace Backend.Data
                 entity.Property(e => e.Country).HasColumnName("country").IsRequired();
                 entity.Property(e => e.LastSessionId).HasColumnName("last_session_id");
             });
+             modelBuilder.Entity<Payment>(entity =>
+    {
+        entity.ToTable("payments");
+
+        entity.HasKey(e => e.PaymentId);
+
+        entity.Property(e => e.PaymentId).HasColumnName("payment_id");
+        entity.Property(e => e.AuctionId).HasColumnName("auction_id");
+        entity.Property(e => e.UserId).HasColumnName("user_id");
+        entity.Property(e => e.Amount).HasColumnName("amount");
+        entity.Property(e => e.PaymentTime).HasColumnName("payment_time");
+        entity.Property(e => e.Status).HasColumnName("status");
+    });
 
             // Bid entity configuration
   modelBuilder.Entity<Bid>(entity =>

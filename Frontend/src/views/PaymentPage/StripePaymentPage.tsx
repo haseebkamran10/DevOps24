@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useStripe, useElements, CardElement, Elements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
 import { useNavigate } from 'react-router-dom';
+import Spinner from '@/components/ui/spinner';
 
 // Initialize Stripe
 const stripePromise = loadStripe("pk_test_51Oiyy5FgRV0MG2KqZIHLI7vbTuqEAeVPLwgiUXd7gFdGZyUHhjtXAY7pmEcMbTPuinNQCPAuwOTAKxKY8Xp1N6NU00cASQWq8g");
@@ -51,16 +52,17 @@ const StripePaymentPage: React.FC<PaymentPageProps> = ({ totalAmount, itemTitle 
     setLoading(true);
 
     try {
-      const response = await fetch('http://localhost:5001/api/create-payment-intent', {
+      const response = await fetch('https://localhost:5001/api/create-payment-intent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ amount: totalAmount }),
       });
       
-
       if (!response.ok) {
-        throw new Error('Failed to create payment intent. Please check your backend.');
+        const errorDetails = await response.text(); // Read error details from backend
+        throw new Error(`Failed to create payment intent: ${errorDetails}`);
       }
+      
 
       const { clientSecret } = await response.json();
 
@@ -88,6 +90,7 @@ const StripePaymentPage: React.FC<PaymentPageProps> = ({ totalAmount, itemTitle 
       setLoading(false);
     }
   };
+
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 p-4 lg:p-8">
@@ -124,7 +127,7 @@ const StripePaymentPage: React.FC<PaymentPageProps> = ({ totalAmount, itemTitle 
               disabled={loading || !stripe}
               className="w-full mt-4 bg-indigo-600 text-white py-3 rounded-md font-bold hover:bg-indigo-700 transition duration-200"
             >
-              {loading ? 'Processing...' : 'Pay Now'}
+              {loading ?  <Spinner />  : 'Pay Now'}
             </button>
           </form>
 
