@@ -99,7 +99,7 @@ function SingleProductPage() {
     try {
       const fetchedBids = await getBidsForAuction(auction.auctionId);
       setBids(fetchedBids);
-      //setToast({ message: "Bids fetched successfully.", type: "success" }); // Success Toast
+      setToast({ message: "Bids fetched successfully.", type: "success" }); // Success Toast
     } catch (error) {
       console.error("Error fetching bids:", error);
       setToast({ message: "Failed to fetch bids.", type: "error" }); // Error Toast
@@ -193,6 +193,7 @@ const handlePlaceBid = async () => {
         return;
       }
     }
+    await endAuction({ auctionId: auction.auctionId });
   } catch (error) {
     console.error("Error placing bid:", error);
     setToast({ message: "Failed to place bid.", type: "error" }); // Error Toast

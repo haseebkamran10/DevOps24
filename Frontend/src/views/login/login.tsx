@@ -26,6 +26,7 @@ const LoginPage = () => {
     try {
       const sessionId = await startSession({ phoneNumber });
       console.log("Session started successfully:", sessionId);
+      setTimeout(() => navigate("/profile"), 1000); // Delay navigation for better UX
 
       // Save the session ID and phone number locally
       localStorage.setItem("sessionId", sessionId);
@@ -39,7 +40,7 @@ const LoginPage = () => {
 
       // Navigate to profile page
       setToast({ message: "Login successful!", type: "success" });
-      setTimeout(() => navigate("/profile"), 1000); // Delay navigation for better UX
+     
     } catch (err: any) {
       console.error("Login error:", err.message);
       setToast({ message: err.message || "An error occurred during login.", type: "error" });
