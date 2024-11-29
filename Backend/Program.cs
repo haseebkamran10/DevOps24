@@ -1,11 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
 using Backend.Models;
 using Backend.Data;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -83,19 +81,6 @@ catch (FormatException)
     jwtKeyBytes = Encoding.UTF8.GetBytes(jwtKeyBase64);
 }
 
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
-    {
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(jwtKeyBytes),
-            ValidateIssuer = true,
-            ValidIssuer = builder.Configuration["Jwt:Issuer"],
-            ValidateAudience = false,
-            ClockSkew = TimeSpan.Zero
-        };
-    });
 
 // Configure CORS to allow requests from the public domain
 builder.Services.AddCors(options =>
