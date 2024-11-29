@@ -107,29 +107,47 @@ imageUrl = $"http://51.120.6.249:9000/upload/{fileName}";
         }
     
       // Endpoint to fetch all artworks
-        [HttpGet]
-        public async Task<IActionResult> GetAllArtworksAsync()
+       [HttpGet]
+public async Task<IActionResult> GetAllArtworksAsync()
+{
+    try
+    {
+        if (_context.Artworks == null)
         {
-            try
-            {
-                var artworks = await _context.Artworks
-                    .Include(a => a.User) // Optional: Include user details if needed
-                    .ToListAsync();
-
-                if (!artworks.Any())
-                {
-                    return NotFound("No artworks found.");
-                }
-
-                return Ok(artworks);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"An error occurred: {ex.Message}");
-            }
+            return StatusCode(500, "Artworks data source is not available.");
         }
 
-        // Endpoint to fetch a specific artwork by ID
+        var artworks = await _context.Artworks
+            .Include(a => a.User) // Include user details if necessary
+            .ToListAsync();
+
+        // Return an empty list instead of 404 if no artworks are found
+        if (!artworks.Any())
+        {
+            return Ok(new List<object>());
+        }
+
+        // Map artworks to DTOs for frontend compatibility
+        var artworkDtos = artworks.Select(a => new 
+        {
+            a.ArtworkId,
+            a.Title,
+            a.Description,
+            a.Artist,
+            a.ImageUrl,
+            CreatedAt = a.CreatedAt.ToString("yyyy-MM-ddTHH:mm:ss"), // Optional formatting
+            User = a.User == null ? null : new { a.User.UserId, a.User.FirstName, a.User.LastName }
+        }).ToList();
+
+        return Ok(artworkDtos);
+    }
+    catch (Exception ex)
+    {
+        // Return a generic error message for better security
+        return StatusCode(500, "An unexpected error occurred while fetching artworks.");
+    }
+}
+
         [HttpGet("{id}")]
         public async Task<IActionResult> GetArtworkByIdAsync(int id)
         {

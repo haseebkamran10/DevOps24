@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import useScrollEffect from "@/lib/useScrollEffect";
-import { getActiveAuctions, ActiveAuction } from "@/services/AuctionService";
+import { getActiveAuctions, ActiveAuction } from "@/services/auctionService";
 import Spinner from "../../components/ui/spinner";
 import Toast from "../../components/ui/toast";
 import { usePersistent } from "../../contexts/PersistentContext";
+import { getAllArtworks } from "@/services";
 
 const HomePage = () => {
   const bannerRef = useRef<HTMLImageElement>(null);
@@ -15,10 +16,12 @@ const HomePage = () => {
   );
   const [loading, setLoading] = useState(ongoingAuctions.length === 0);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
+  
 
   useScrollEffect(bannerRef, setOpacity);
+  const [artworks, setArtworks] = useState(() => getState("artworks") || []);
 
-  const artworks = [
+  const artworkss = [
     {
       name: "Lion Magnifiqué",
       artist: "Marius Picasso",
@@ -61,13 +64,13 @@ const HomePage = () => {
   ];
 
   useEffect(() => {
-    if (ongoingAuctions.length > 0) return; // Skip API call if data is already cached
+    if (ongoingAuctions.length > 0) return; 
 
     const fetchAuctions = async () => {
       try {
         const auctions = await getActiveAuctions();
         setOngoingAuctions(auctions);
-        setState("ongoingAuctions", auctions); // Persist in localStorage
+        setState("ongoingAuctions", auctions);
         setToast({ message: "Auctions fetched successfully!", type: "success" });
       } catch (error) {
         console.error("Failed to fetch ongoing auctions:", error);
@@ -79,6 +82,33 @@ const HomePage = () => {
 
     fetchAuctions();
   }, [setState, getState, ongoingAuctions.length]);
+
+  useEffect(() => {
+    if (artworks.length > 0) return;
+
+    const fetchArtworks = async () => {
+      setLoading(true);
+      try {
+        const fetchedArtworks = await getAllArtworks();
+        const formattedArtworks = fetchedArtworks.map((art) => ({
+          name: art.title,
+          artist: art.artist,
+          imgSrc: art.imageUrl,
+          link: `/SingleProductPage/${art.artworkId}`, 
+        }));
+        setArtworks(formattedArtworks);
+        setState("artworks", formattedArtworks);
+        setToast({ message: "Artworks fetched successfully!", type: "success" });
+      } catch (error) {
+        console.error("Failed to fetch artworks:", error);
+        setToast({ message: "Failed to fetch artworks. Please try again.", type: "error" });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchArtworks();
+  }, [artworks, setState]);
 
   return (
     <>
