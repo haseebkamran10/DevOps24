@@ -1,7 +1,7 @@
 import axios from "axios";
 
 // Define the base URL for the API
-const BASE_URL = "https://localhost:5001/api/Artwork";
+const BASE_URL = "http://51.120.6.249:5000/api/Artwork";
 
 // DTO for creating an artwork
 interface CreateArtworkDto {
