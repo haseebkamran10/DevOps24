@@ -9,10 +9,15 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Configure Kestrel to listen on all IP addresses and the specific port
+builder.WebHost.ConfigureKestrel(serverOptions =>
+{
+    serverOptions.ListenAnyIP(5000); // Listen on port 5000 for HTTP
+});
+
 // Add services to the container
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-/*builder.Services.AddHostedService<AuctionManagementService>();*/
 
 // Configure Swagger with JWT authentication
 builder.Services.AddSwaggerGen(c =>
@@ -52,7 +57,6 @@ builder.Services.AddDbContextFactory<DatabaseContext>(options =>
            .EnableSensitiveDataLogging()
            .EnableDetailedErrors());
 
-
 // Add DbContextFactory for background services
 builder.Services.AddDbContextFactory<DatabaseContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
@@ -85,20 +89,20 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(jwtKeyBytes), // Correct key
+            IssuerSigningKey = new SymmetricSecurityKey(jwtKeyBytes),
             ValidateIssuer = true,
-            ValidIssuer = builder.Configuration["Jwt:Issuer"], // Must match `iss` claim in token
-            ValidateAudience = false, // Change to `true` if `aud` needs to be verified
-            ClockSkew = TimeSpan.Zero // Avoid time differences
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidateAudience = false,
+            ClockSkew = TimeSpan.Zero
         };
     });
 
-// Configure CORS
+// Configure CORS to allow requests from the public domain
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins("http://localhost:5173", "https://localhost:5173")
+        policy.WithOrigins("http://51.120.6.249", "https://51.120.6.249") // Allow requests from the VM's public domain
                .AllowAnyHeader()
                .AllowAnyMethod()
                .AllowCredentials();
@@ -142,7 +146,7 @@ app.UseExceptionHandler(errorApp =>
     });
 });
 
-app.UseHttpsRedirection();
+app.UseHttpsRedirection(); // HTTPS redirection will depend on SSL/TLS setup on your VM
 
 // Enable CORS
 app.UseCors("AllowFrontend");
