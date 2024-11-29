@@ -9,9 +9,10 @@
     }
   ],
   "compilerOptions": {
-    "baseUrl": ".",
+    "types": ["vitest", "node"], 
+    "baseUrl": "./",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["src/*"]
     }
   }
 }

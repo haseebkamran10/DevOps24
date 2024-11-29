@@ -2,11 +2,6 @@ const navItems = [
   {
     name: "Product Catalogue",
     href: "/products",
-    // subItems: [
-    //   { name: "All Products", href: "/products/all" },
-    //   { name: "Categories", href: "/products/categories" },
-    //   { name: "New Arrivals", href: "/products/new" },
-    // ],
   },
   {
     name: "Support",
@@ -16,7 +11,7 @@ const navItems = [
       { name: "Contact Us", href: "/support#contact" },
     ],
   },
-  { name: "Winners", href: "/winners" },
+  /*{ name: "Winners", href: "/winners" },*/
 ];
 
 export default navItems;

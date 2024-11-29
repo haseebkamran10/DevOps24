@@ -1,11 +1,21 @@
-import useScrollEffect from "@/lib/useScrollEffect";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import CreateAuctionForm from "../createAuction";
+import useScrollEffect from "@/lib/useScrollEffect";
+import { getActiveAuctions, ActiveAuction } from "@/services/auctionService";
+import Spinner from "../../components/ui/spinner";
+import Toast from "../../components/ui/toast";
+import { usePersistent } from "../../contexts/PersistentContext";
 
 const HomePage = () => {
   const bannerRef = useRef<HTMLImageElement>(null);
   const [opacity, setOpacity] = useState(0.7);
+  const { getState, setState } = usePersistent(); // Persistent state
+  const [ongoingAuctions, setOngoingAuctions] = useState<ActiveAuction[]>(
+    () => getState("ongoingAuctions") || [] // Load from localStorage if available
+  );
+  const [loading, setLoading] = useState(ongoingAuctions.length === 0);
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
+
   useScrollEffect(bannerRef, setOpacity);
 
   const artworks = [
@@ -13,19 +23,19 @@ const HomePage = () => {
       name: "Lion Magnifiqué",
       artist: "Marius Picasso",
       imgSrc: "lion-painting.png",
-      link: "/1",
+      link: "/SingleProductPage",
     },
     {
       name: "Sunset Overdrive",
-      artist: "Artist B",
+      artist: "Haseeb",
       imgSrc: "lion-painting2.jpg",
-      link: "/1",
+      link: "/SingleProductPage",
     },
     {
       name: "Abstract Delight",
-      artist: "Artist C",
+      artist: "Fathi",
       imgSrc: "artwork_3.jpg",
-      link: "/1",
+      link: "/SingleProductPage",
     },
   ];
 
@@ -34,21 +44,41 @@ const HomePage = () => {
       name: "Modern Masterpiece",
       date: "Preview on 2024-09-27",
       imgSrc: "artwork_4.jpg",
-      link: "/1",
+      link: "/SingleProductPage",
     },
     {
       name: "Renaissance Revival",
       date: "Preview on 2024-09-28",
       imgSrc: "artwork_5.jpg",
-      link: "/1",
+      link: "/SingleProductPage",
     },
     {
       name: "Classical Expression",
       date: "Preview on 2024-09-29",
       imgSrc: "artwork_6.jpg",
-      link: "/1",
+      link: "/SingleProductPage",
     },
   ];
+
+  useEffect(() => {
+    if (ongoingAuctions.length > 0) return; // Skip API call if data is already cached
+
+    const fetchAuctions = async () => {
+      try {
+        const auctions = await getActiveAuctions();
+        setOngoingAuctions(auctions);
+        setState("ongoingAuctions", auctions); // Persist in localStorage
+        setToast({ message: "Auctions fetched successfully!", type: "success" });
+      } catch (error) {
+        console.error("Failed to fetch ongoing auctions:", error);
+        setToast({ message: "Failed to fetch auctions. Please try again.", type: "error" });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAuctions();
+  }, [setState, getState, ongoingAuctions.length]);
 
   return (
     <>
@@ -67,6 +97,7 @@ const HomePage = () => {
           </p>
         </div>
 
+        {/* Featured Artworks */}
         <div className="container mx-auto px-5 md:px-10 py-10 md:py-20">
           <h2 className="text-2xl md:text-3xl font-bold mb-6">Featured Artworks</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -94,6 +125,7 @@ const HomePage = () => {
           </div>
         </div>
 
+        {/* Upcoming Auctions */}
         <div className="container mx-auto px-5 md:px-10 py-10 md:py-20">
           <h2 className="text-2xl md:text-3xl font-bold mb-6">Upcoming Auctions</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -121,11 +153,58 @@ const HomePage = () => {
           </div>
         </div>
 
+        {/* Ongoing Auctions */}
         <div className="container mx-auto px-5 md:px-10 py-10 md:py-20">
-          <h2 className="text-2xl md:text-3xl font-bold mb-6">Create a New Auction</h2>
-          <CreateAuctionForm />
+          <h2 className="text-2xl md:text-3xl font-bold mb-6">Ongoing Auctions</h2>
+          {loading ? (
+            <div className="flex justify-center">
+              <Spinner />
+            </div>
+          ) : ongoingAuctions.length === 0 ? (
+            <p className="text-center">No ongoing auctions at the moment.</p>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {ongoingAuctions.map((auction) => (
+                <div
+                  key={auction.auctionId}
+                  className="shadow-lg rounded-lg overflow-hidden w-full max-w-xs mx-auto"
+                >
+                  <img
+                    src={auction.artwork.imageUrl}
+                    alt={auction.artwork.title}
+                    className="h-60 w-full object-cover"
+                  />
+                  <div className="p-4 bg-gray-800">
+                    <h3 className="font-bold truncate">{auction.artwork.title}</h3>
+                    <p className="text-sm truncate">Artist: {auction.artwork.artist}</p>
+                    <p className="text-sm text-yellow-400">
+                      Current Bid: {auction.currentBid || auction.startingBid} USD
+                    </p>
+                    <p className="text-sm text-red-400">
+                      Ends At: {new Date(auction.endTime).toLocaleString()}
+                    </p>
+                    <Link
+                      to={`/SingleProductPage`}
+                      state={{ auction: auction }}
+                    >
+                      <button className="mt-2 bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded text-xs">
+                        Bid Now
+                      </button>
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
     </>
   );
 };

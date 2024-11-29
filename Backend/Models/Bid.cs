@@ -1,23 +1,31 @@
+using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-public class Bid
+namespace Backend.Models
 {
-    [Key]
-    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-    public int BidId { get; set; }
+    public class Bid
+    {
+        [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public int BidId { get; set; }
 
-    [Required] // Ensures non-null value in the database
-    [ForeignKey("ItemId")]
-    public required string ItemId { get; set; } // Ensures value is set during object initialization
+        [ForeignKey("Auction")]
+        public int AuctionId { get; set; }
+        public Auction Auction { get; set; }
 
-    [Required]
-    [ForeignKey("CustomerId")]
-    public int BidderId { get; set; }
+        [ForeignKey("User")]
+        public int UserId { get; set; }
+        public User User { get; set; }
 
-    [Required]
-    public int BidAmmount { get; set; }
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal BidAmount { get; set; }
 
-    [Required]
-    public DateTime BidTime { get; set; }
+        // Explicitly map this as `timestamp without time zone`
+        public DateTime BidTime { get; set; }
+
+        [ForeignKey("Session")]
+        public Guid? SessionId { get; set; }
+        public Session Session { get; set; }
+    }
 }

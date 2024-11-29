@@ -1,13 +1,52 @@
 import { FormEvent, useRef, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { startSession } from "../../services/SessionService"; // Ensure the correct path
+import { getUserByPhoneNumber } from "../../services/UserService"; // Import the getUser function
+import Spinner from "../../components/ui/spinner"; // Adjust the path as needed
+import Toast from  "../../components/ui/toast"; // Adjust the path as needed
 
 const LoginPage = () => {
   const bannerRef = useRef<HTMLImageElement>(null);
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
+  const navigate = useNavigate();
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    console.log("Login with:", username, password);
+
+    if (phoneNumber.trim() === "") {
+      setToast({ message: "Please enter your phone number.", type: "error" });
+      return;
+    }
+
+    setLoading(true);
+    setToast(null);
+
+    try {
+      const sessionId = await startSession({ phoneNumber });
+      console.log("Session started successfully:", sessionId);
+      setTimeout(() => navigate("/profile"), 1000); // Delay navigation for better UX
+
+      // Save the session ID and phone number locally
+      localStorage.setItem("sessionId", sessionId);
+      localStorage.setItem("phoneNumber", phoneNumber);
+
+      // Fetch user details after the session starts
+      const user = await getUserByPhoneNumber(phoneNumber);
+      // Save user details and username in localStorage
+      localStorage.setItem("userDetails", JSON.stringify(user));
+      localStorage.setItem("username", `${user.firstName} ${user.lastName}`);
+
+      // Navigate to profile page
+      setToast({ message: "Login successful!", type: "success" });
+     
+    } catch (err: any) {
+      console.error("Login error:", err.message);
+      setToast({ message: err.message || "An error occurred during login.", type: "error" });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -30,79 +69,47 @@ const LoginPage = () => {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label
-                htmlFor="username"
+                htmlFor="phoneNumber"
                 className="block text-sm font-medium text-gray-700"
               >
-                Username
+                Phone Number
               </label>
               <input
                 type="text"
-                id="username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-gray-900"
-                placeholder="Enter your username"
+                id="phoneNumber"
+                value={phoneNumber}
+                onChange={(e) => setPhoneNumber(e.target.value)}
+                className="mt-1 block w-full px-4 py-2 bg-white border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900"
+                placeholder="Enter your phone number"
                 required
               />
-            </div>
-            <div>
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Password
-              </label>
-              <input
-                type="password"
-                id="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-gray-900"
-                placeholder="Enter your password"
-                required
-              />
-            </div>
-            <div className="flex justify-between items-center">
-              <div className="flex items-center">
-                <input
-                  id="remember-me"
-                  type="checkbox"
-                  className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                />
-                <label
-                  htmlFor="remember-me"
-                  className="ml-2 block text-sm text-gray-600"
-                >
-                  Remember me
-                </label>
-              </div>
-              <div className="text-sm">
-                <a
-                  href="#"
-                  className="font-medium text-indigo-600 hover:text-indigo-500"
-                >
-                  Forgot your password?
-                </a>
-              </div>
             </div>
             <button
               type="submit"
               className="w-full py-3 px-4 border border-transparent rounded-lg shadow-sm text-white font-bold bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all"
+              disabled={loading}
             >
-              Sign In
+              {loading ? <Spinner /> : "Sign In"}
             </button>
           </form>
           <p className="mt-6 text-center text-sm text-gray-600">
             Don’t have an account?{" "}
-            <a
-              href="#"
+            <Link
+              to="/signup"
               className="font-medium text-indigo-600 hover:text-indigo-500"
             >
               Sign up
-            </a>
+            </Link>
           </p>
         </div>
       </div>
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
     </>
   );
 };

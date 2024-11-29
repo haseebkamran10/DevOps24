@@ -1,25 +1,45 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { HashLink } from "react-router-hash-link";
 import { Menu } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
 import { Sheet, SheetContent, SheetTrigger } from "../components/ui/sheet";
+import { getUserByPhoneNumber } from "../services/UserService";
+import { endSession } from "../services/SessionService";
 import navItems from "./navItems";
 
 const NavigationMenu = () => {
+  const [userName, setUserName] = useState("Guest");
+  const [userAvatar, setUserAvatar] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const navigate = useNavigate();
 
-  const handleLoginClick = () => {
-    setIsOpen(false);
-    navigate("/login");
-  };
+  useEffect(() => {
+    const fetchUserDetails = async () => {
+      try {
+        const phoneNumber = localStorage.getItem("phoneNumber");
+        if (!phoneNumber) {
+          throw new Error("No phone number found. Please log in again.");
+        }
 
-  const handleScroll = useCallback(() => {
+        const user = await getUserByPhoneNumber(phoneNumber);
+        setUserName(`${user.firstName} ${user.lastName}`);
+        setUserAvatar(null); // Update to user's avatar URL if available
+      } catch (error: any) {
+        console.error("Failed to fetch user details:", error.message);
+        setUserName("Guest");
+      }
+    };
+
+    fetchUserDetails();
+  }, []);
+
+  const handleScroll = () => {
     const currentScrollY = window.scrollY;
+
     if (currentScrollY < 0) return;
 
     if (currentScrollY > lastScrollY) {
@@ -29,14 +49,41 @@ const NavigationMenu = () => {
     }
 
     setLastScrollY(currentScrollY);
-  }, [lastScrollY]);
+  };
 
   useEffect(() => {
-    window.addEventListener("scroll", handleScroll);
-    return () => {
+    const debounceScroll = () => {
       window.removeEventListener("scroll", handleScroll);
+      window.addEventListener("scroll", handleScroll);
     };
-  }, [handleScroll]);
+    debounceScroll();
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [lastScrollY]);
+
+  const handleLoginClick = () => {
+    navigate("/login");
+  };
+
+  const handleLogout = async () => {
+    try {
+      const sessionId = localStorage.getItem("sessionId");
+      if (!sessionId) {
+        throw new Error("No session ID found. Please log in again.");
+      }localStorage.removeItem("sessionId");
+      localStorage.removeItem("phoneNumber");
+
+      await endSession(sessionId);
+      console.log("Session ended successfully.");
+    } catch (error: any) {
+      console.error("Error ending session:", error.message);
+    } finally {
+      localStorage.removeItem("sessionId");
+      localStorage.removeItem("phoneNumber");
+      setUserName("Guest");
+      setUserAvatar(null);
+      navigate("/");
+    }
+  };
 
   return (
     <nav
@@ -48,23 +95,20 @@ const NavigationMenu = () => {
         <Link to="/" className="mr-6 flex items-center space-x-2">
           <span className="text-2xl font-bold">KunstHavn</span>
         </Link>
+
+        {/* Navigation Links */}
         <div className="hidden md:flex space-x-4">
           {navItems.map((item) => (
             <div key={item.name} className="relative group">
               <Link
                 to={item.href}
-                className=" text-base text-popover-foreground hover:text-gray-900"
+                className="text-base text-popover-foreground hover:text-gray-900"
               >
                 {item.name}
               </Link>
               {item.subItems && (
                 <div className="absolute -left-16 mt-0 w-48 rounded-md text-sm shadow-lg bg-white ring-1 ring-black ring-opacity-5 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition ease-out duration-200">
-                  <div
-                    className="py-1"
-                    role="menu"
-                    aria-orientation="vertical"
-                    aria-labelledby="options-menu"
-                  >
+                  <div className="py-1" role="menu">
                     {item.subItems.map((subItem) => (
                       <HashLink
                         key={subItem.name}
@@ -81,22 +125,35 @@ const NavigationMenu = () => {
             </div>
           ))}
         </div>
+
+        {/* User Section */}
         <div className="ml-auto flex items-center space-x-4">
-          <Avatar>
-            <AvatarImage src="/profile-silluette.jpg" alt="@user" />
-            <AvatarFallback>U</AvatarFallback>
-            <Link to="/profile" className="absolute inset-0">
-              <span className="sr-only">Go to profile</span>
-            </Link>
-          </Avatar>
-          <Button
-            variant="ghost"
-            className="hidden md:inline-flex"
-            onClick={handleLoginClick}
-          >
-            Log in
-          </Button>
+          {userName !== "Guest" ? (
+            <div className="flex items-center space-x-4">
+              <Avatar onClick={() => navigate("/profile")} className="cursor-pointer">
+                {userAvatar ? (
+                  <AvatarImage src={userAvatar} alt={userName} />
+                ) : (
+                  <AvatarFallback>{userName.charAt(0).toUpperCase()}</AvatarFallback>
+                )}
+              </Avatar>
+              <span className="text-base font-medium">Welcome, {userName}</span>
+              <Button variant="ghost" onClick={handleLogout}>
+                Log out
+              </Button>
+            </div>
+          ) : (
+            <Button
+              variant="ghost"
+              className="hidden md:inline-flex"
+              onClick={handleLoginClick}
+            >
+              Log in
+            </Button>
+          )}
         </div>
+
+        {/* Mobile Navigation Menu */}
         <div className="md:hidden ml-4">
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild>
@@ -109,15 +166,20 @@ const NavigationMenu = () => {
                 <span className="sr-only">Toggle menu</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side="right">
+
+            <SheetContent
+              side="right"
+              style={{
+                top: 0,
+                maxHeight: "100vh",
+                overflowY: "auto",
+                position: "fixed",
+              }}
+            >
               <nav className="flex flex-col space-y-4">
                 {navItems.map((item) => (
                   <React.Fragment key={item.name}>
-                    <Link
-                      to={item.href}
-                      className="text-lg font-medium"
-                      onClick={() => setIsOpen(false)} // Close menu on click
-                    >
+                    <Link to={item.href} className="text-lg font-medium">
                       {item.name}
                     </Link>
                     {item.subItems && (
@@ -127,18 +189,23 @@ const NavigationMenu = () => {
                             key={subItem.name}
                             to={subItem.href}
                             className="text-sm text-gray-600"
-                            onClick={() => setIsOpen(false)} // Close menu on click
                           >
                             {subItem.name}
                           </Link>
                         ))}
                       </div>
                     )}
-                  </React.Fragment>
+                </React.Fragment>
                 ))}
-                <Button variant="ghost" onClick={handleLoginClick}>
-                  Log in
-                </Button>
+                {userName !== "Guest" ? (
+                  <Button variant="ghost" onClick={handleLogout}>
+                    Log out
+                  </Button>
+                ) : (
+                  <Button variant="ghost" onClick={handleLoginClick}>
+                    Log in
+                  </Button>
+                )}
               </nav>
             </SheetContent>
           </Sheet>

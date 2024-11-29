@@ -4,51 +4,59 @@ import Home from "../views/home/home";
 import Profile from "../views/profile/profile_overview";
 import { Layout } from "./Layout";
 import ProductCatalogPage from "@/views/product-catalogue/product-catalogue-page";
-import LionPainting from "@/views/items/lion-painting";
+import LionPainting from "@/views/items/SingleProductPage";
 import LoginPage from "@/views/login/login";
 import PaymentPage from "@/views/PaymentPage/PaymentPage";
 import WinnerPage from "@/views/WinnerPage/WinnerPage";
 import NewAuctionPage from "@/views/newAuctionPage";
+import SignupPage from "@/views/SignupPage/SignupPage";
 
 export const routes: RouteObject[] = [
   {
     path: "/",
-    element: <Layout />, // Use Layout as the root element
+    element: <Layout />, // Root layout
     children: [
       {
-        path: "/",
+        index: true, // Default route under Layout
         element: <Home />,
       },
       {
-        path: "/products",
+        path: "products", // Relative path (no leading slash)
         element: <ProductCatalogPage />,
       },
       {
-        path: "/support",
+        path: "support",
         element: <SupportPage />,
       },
       {
-        path: "/profile",
+        path: "profile",
         element: <Profile />,
       },
       {
-        path: "/1",
+        path: "SingleProductPage",
         element: <LionPainting />,
       },
-
       {
-        path: "/login",
+        path: "login",
         element: <LoginPage />,
       },
       {
-        path: "/paymentpage",
+        path: "signup",
+        element: <SignupPage />,
+      },
+      {
+        path: "paymentpage",
         element: <PaymentPage totalAmount={0} itemTitle={""} />,
       },
-      { path: "/winners", element: <WinnerPage /> },
       {
-        path: "/new-auction",
+        path: "winners",
+        element: <WinnerPage />,
+      },
+      {
+        path: "new-auction",
         element: <NewAuctionPage />,
       },
     ],
   },
+  
 ];
