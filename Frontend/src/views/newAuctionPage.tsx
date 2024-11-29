@@ -2,13 +2,13 @@ import { useEffect, useState } from "react";
 import DatePicker from "react-datepicker"; // Using a date picker for better UX
 import "react-datepicker/dist/react-datepicker.css"; // Include CSS for DatePicker
 import { createArtwork } from "@/services/ArtworkService";
-import { startAuction } from "@/services/AuctionService";
+import { startAuction } from "@/services/auctionService";
 import {useNavigate } from "react-router-dom";
 import Spinner from "../components/ui/spinner"; // Adjust the path as needed
 import Toast from  "../components/ui/toast"; // Adjust the path as needed
 
 function NewAuctionPage() {
-  const [step, setStep] = useState(1); // Track current step (1: Artwork, 2: Auction)
+  const [step, setStep] = useState(2); // Track current step (1: Artwork, 2: Auction)
   const [artworkId, setArtworkId] = useState<number | null>(null); // Store artwork ID
   const [loading, setLoading] = useState(false); // Loading state
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
