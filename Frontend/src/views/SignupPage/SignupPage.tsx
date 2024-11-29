@@ -20,7 +20,6 @@ const SignupPage = () => {
   const [password, setPassword] = useState(""); // Dummy password
   const [confirmPassword, setConfirmPassword] = useState(""); // Dummy confirm password
   const [isLoading, setIsLoading] = useState(false);
-  const [loading, setLoading] = useState(false); // For Spinner
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
   const navigate = useNavigate();

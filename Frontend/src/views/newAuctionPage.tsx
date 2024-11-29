@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import DatePicker from "react-datepicker"; // Using a date picker for better UX
 import "react-datepicker/dist/react-datepicker.css"; // Include CSS for DatePicker
 import { createArtwork } from "@/services/ArtworkService";
-import { startAuction } from "@/services/AuctionService";
+import { startAuction } from "@/services/auctionService";
 import {useNavigate } from "react-router-dom";
 import Spinner from "../components/ui/spinner"; // Adjust the path as needed
 import Toast from  "../components/ui/toast"; // Adjust the path as needed

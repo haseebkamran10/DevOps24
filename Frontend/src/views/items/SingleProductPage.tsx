@@ -15,7 +15,7 @@ import {
 } from "react-icons/md";
 import { VscVerified } from "react-icons/vsc";
 import { placeBid, getBidsForAuction } from "../../services/BidService";
-import  {endAuction, getActiveAuctions} from "../../services/AuctionService";
+import  {endAuction, getActiveAuctions} from "../../services/auctionService";
 import Spinner from "../../components/ui/spinner"; // Adjust the path as needed
 import Toast from  "../../components/ui/toast"; // Adjust the path as needed
 import { getUser } from "@/services";
@@ -36,7 +36,12 @@ function SingleProductPage() {
     type: "success",
   });
   
- 
+  interface Bid {
+    bidId: number;
+    bidAmount: number;
+    bidTime: string; // or Date if your API returns a proper Date object
+  }
+  
 
   const toggleOverlay = () => {
     setIsOverlayOpen(!isOverlayOpen);
@@ -418,7 +423,7 @@ const handlePlaceBid = async () => {
       <div className="p-4 max-h-72 overflow-y-auto">
         {bids.length > 0 ? (
           <ul className="divide-y divide-gray-200">
-            {bids.map((bid) => (
+            {bids.map((bid : Bid ) => (
               <li key={bid.bidId} className="py-3 flex justify-between items-center">
                 <span className="text-gray-800 font-medium">{bid.bidAmount} USD</span>
                 <span className="text-gray-500 text-sm">{new Date(bid.bidTime).toLocaleString()}</span>
