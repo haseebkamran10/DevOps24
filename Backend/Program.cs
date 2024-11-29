@@ -10,7 +10,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Configure Kestrel to listen on all IP addresses and the specific port
 builder.WebHost.ConfigureKestrel(serverOptions =>
 {
-    serverOptions.ListenAnyIP(5000); // Listen on port 5000 for HTTP
+    serverOptions.ListenAnyIP(5001); // Updated to port 5001
 });
 
 // Add services to the container
@@ -81,13 +81,12 @@ catch (FormatException)
     jwtKeyBytes = Encoding.UTF8.GetBytes(jwtKeyBase64);
 }
 
-
 // Configure CORS to allow requests from the public domain
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins("http://51.120.6.249", "https://51.120.6.249") // Allow requests from the VM's public domain
+        policy.WithOrigins("http://51.120.6.249:5001", "https://51.120.6.249:5001") // Updated to allow new port
                .AllowAnyHeader()
                .AllowAnyMethod()
                .AllowCredentials();

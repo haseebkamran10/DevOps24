@@ -14,7 +14,7 @@ interface RegisterUserDto {
 }
 
 // Base URL for the API
-const BASE_URL = "http://51.120.6.249:5000/api/User";
+const BASE_URL = "http://51.120.6.249:5001/api/User";
 
 /**
  * Add a new user.
@@ -78,7 +78,7 @@ export const getUserByPhoneNumber = async (
 ): Promise<RegisterUserDto> => {
   try {
     const response = await axios.get<RegisterUserDto>(
-      `http://51.120.6.249:5000/api/User/by-phone/${phoneNumber}`,
+      `http://51.120.6.249:5001/api/User/by-phone/${phoneNumber}`,
       {
         headers: {
           "Content-Type": "application/json",
