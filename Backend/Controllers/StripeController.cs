@@ -60,69 +60,75 @@ namespace Backend.Controllers // Adjust namespace to match your project
         }
     }
 
-    [ApiController]
-    [Route("api/webhooks/stripe")]
-    public class StripeWebhookController : ControllerBase
+ [ApiController]
+[Route("api/webhooks/stripe")]
+public class StripeWebhookController : ControllerBase
+{
+    private readonly IConfiguration _configuration;
+
+    public StripeWebhookController(IConfiguration configuration)
     {
-        private readonly IConfiguration _configuration;
-
-        public StripeWebhookController(IConfiguration configuration)
-        {
-            _configuration = configuration;
-        }
-
-        /// <summary>
-        /// Handles Stripe webhook events such as payment success or failure.
-        /// </summary>
-        /// <returns>A response indicating webhook processing status.</returns>
-        [HttpPost]
-        public async Task<IActionResult> HandleStripeWebhook()
-        {
-            var json = await new StreamReader(HttpContext.Request.Body).ReadToEndAsync();
-            var webhookSecret = _configuration["Stripe:WebhookSecret"];
-            Event stripeEvent;
-
-            try
-            {
-                stripeEvent = EventUtility.ConstructEvent(
-                    json,
-                    Request.Headers["Stripe-Signature"],
-                    webhookSecret
-                );
-            }
-            catch (StripeException ex)
-            {
-                Console.WriteLine($"Stripe Webhook Error: {ex.Message}");
-                return BadRequest(new { error = $"Webhook Error: {ex.Message}" });
-            }
-
-            // Handle the event
-            switch (stripeEvent.Type)
-            {
-                case "payment_intent.succeeded":
-                    var paymentIntent = stripeEvent.Data.Object as PaymentIntent;
-                    if (paymentIntent != null)
-                    {
-                        Console.WriteLine($"PaymentIntent succeeded: {paymentIntent.Id}");
-                        // Add your business logic here
-                    }
-                    break;
-
-                case "payment_intent.payment_failed":
-                    var failedPaymentIntent = stripeEvent.Data.Object as PaymentIntent;
-                    if (failedPaymentIntent != null)
-                    {
-                        Console.WriteLine($"PaymentIntent failed: {failedPaymentIntent.Id}");
-                        // Add your failure handling logic here
-                    }
-                    break;
-
-                default:
-                    Console.WriteLine($"Unhandled event type: {stripeEvent.Type}");
-                    break;
-            }
-
-            return Ok();
-        }
+        _configuration = configuration;
     }
+
+    [HttpPost]
+    public async Task<IActionResult> HandleStripeWebhook()
+    {
+        var json = await new StreamReader(HttpContext.Request.Body).ReadToEndAsync();
+        var webhookSecret = _configuration["Stripe:WebhookSecret"];
+        Event stripeEvent;
+
+        try
+        {
+            stripeEvent = EventUtility.ConstructEvent(
+                json,
+                Request.Headers["Stripe-Signature"],
+                webhookSecret
+            );
+        }
+        catch (StripeException ex)
+        {
+            Console.WriteLine($"Stripe Webhook Error: {ex.Message}");
+            return BadRequest(new { error = $"Webhook Error: {ex.Message}" });
+        }
+
+        // Handle the event
+        switch (stripeEvent.Type)
+        {
+            case "payment_intent.succeeded":
+                var paymentIntent = stripeEvent.Data.Object as PaymentIntent;
+                if (paymentIntent != null)
+                {
+                    Console.WriteLine($"PaymentIntent succeeded: {paymentIntent.Id}");
+                    // Add your business logic here, e.g., update order status
+                }
+                break;
+
+            case "payment_intent.payment_failed":
+                var failedPaymentIntent = stripeEvent.Data.Object as PaymentIntent;
+                if (failedPaymentIntent != null)
+                {
+                    Console.WriteLine($"PaymentIntent failed: {failedPaymentIntent.Id}");
+                    // Handle failure
+                }
+                break;
+
+            case "payment_intent.requires_action":
+                var requiresActionIntent = stripeEvent.Data.Object as PaymentIntent;
+                if (requiresActionIntent != null)
+                {
+                    Console.WriteLine($"Payment requires action: {requiresActionIntent.Id}");
+                    // Handle 3D Secure or other actions required
+                }
+                break;
+
+            default:
+                Console.WriteLine($"Unhandled event type: {stripeEvent.Type}");
+                break;
+        }
+
+        return Ok();
+    }
+}
+
 }

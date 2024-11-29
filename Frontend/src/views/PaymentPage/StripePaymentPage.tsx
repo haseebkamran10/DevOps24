@@ -37,35 +37,36 @@ const StripePaymentPage: React.FC<PaymentPageProps> = ({ totalAmount, itemTitle 
 
   const handleStripePayment = async (e: React.FormEvent) => {
     e.preventDefault();
-
+  
     if (!stripe || !elements) {
       setPaymentStatus('Stripe is not loaded. Please try again later.');
       return;
     }
-
+  
     const cardElement = elements.getElement(CardElement);
     if (!cardElement) {
       setPaymentStatus('Payment failed: Card information is missing.');
       return;
     }
-
+  
     setLoading(true);
-
+  
     try {
-      const response = await fetch('https://localhost:5001/api/create-payment-intent', {
+      // Call your backend to create the PaymentIntent
+      const response = await fetch('https://localhost:5001/api/payments/create-payment-intent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: totalAmount }),
+        body: JSON.stringify({ amount: totalAmount }), // Ensure totalAmount is a number
       });
-      
+  
       if (!response.ok) {
         const errorDetails = await response.text(); // Read error details from backend
         throw new Error(`Failed to create payment intent: ${errorDetails}`);
       }
-      
-
-      const { clientSecret } = await response.json();
-
+  
+      const { clientSecret } = await response.json(); // Get the clientSecret from backend
+  
+      // Confirm the PaymentIntent on the frontend with Stripe
       const result = await stripe.confirmCardPayment(clientSecret, {
         payment_method: {
           card: cardElement,
@@ -75,14 +76,13 @@ const StripePaymentPage: React.FC<PaymentPageProps> = ({ totalAmount, itemTitle 
           },
         },
       });
-
+  
       if (result.error) {
         setPaymentStatus(`Payment failed: ${result.error.message}`);
-      } else if (result.paymentIntent && result.paymentIntent.status === 'succeeded') {
+      } else if (result.paymentIntent.status === 'succeeded') {
         setPaymentStatus('Payment successful!');
-
         // Redirect to a confirmation page after a short delay
-        setTimeout(() => navigate('/confirmation'), 2000);
+        //setTimeout(() => navigate('/confirmation'), 2000);
       }
     } catch (error: any) {
       setPaymentStatus(`Error: ${error.message}`);
@@ -90,7 +90,8 @@ const StripePaymentPage: React.FC<PaymentPageProps> = ({ totalAmount, itemTitle 
       setLoading(false);
     }
   };
-
+  
+  
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 p-4 lg:p-8">

@@ -15,7 +15,7 @@ import {
 } from "react-icons/md";
 import { VscVerified } from "react-icons/vsc";
 import { placeBid, getBidsForAuction } from "../../services/BidService";
-import  {endAuction} from "../../services/AuctionService";
+import  {endAuction} from "../../services/auctionService";
 import Spinner from "../../components/ui/spinner"; // Adjust the path as needed
 import Toast from  "../../components/ui/toast"; // Adjust the path as needed
 

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import useScrollEffect from "@/lib/useScrollEffect";
-import { getActiveAuctions, ActiveAuction } from "@/services/AuctionService";
+import { getActiveAuctions, ActiveAuction } from "@/services/auctionService";
 import Spinner from "../../components/ui/spinner";
 import Toast from "../../components/ui/toast";
 import { usePersistent } from "../../contexts/PersistentContext";
