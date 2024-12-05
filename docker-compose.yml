@@ -19,7 +19,7 @@ services:
       context: ./Frontend
       dockerfile: Dockerfile
     ports:
-      - "80:80"
+      - "8080:80"
     networks:
       - app-network
     depends_on:
@@ -35,7 +35,7 @@ services:
       POSTGRES_PASSWORD: SS8CGDEssyk0AH8N
       POSTGRES_DB: postgres
     ports:
-      - "5432:6543"
+      - "6543:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
