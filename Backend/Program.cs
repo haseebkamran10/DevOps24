@@ -12,7 +12,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-/*builder.Services.AddHostedService<AuctionManagementService>();*/
+builder.Services.AddHostedService<AuctionManagementService>();
 
 // Configure Swagger with JWT authentication
 builder.Services.AddSwaggerGen(c =>
@@ -46,19 +46,16 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 // Configure database context
-builder.Services.AddDbContextFactory<DatabaseContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
-           .LogTo(Console.WriteLine, LogLevel.Information)
-           .EnableSensitiveDataLogging()
-           .EnableDetailedErrors());
-
-
-// Add DbContextFactory for background services
-builder.Services.AddDbContextFactory<DatabaseContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
+builder.Services.AddDbContext<DatabaseContext>(options =>
+    options.UseNpgsql(
+        builder.Configuration.GetConnectionString("DefaultConnection")
+    )
+    .LogTo(Console.WriteLine, LogLevel.Information)
+    .EnableSensitiveDataLogging() // Disable this in production
+    .EnableDetailedErrors()
 );
 
-// JWT Configuration
+// JWT Authentication
 var jwtKeyBase64 = builder.Configuration["Jwt:Key"];
 if (string.IsNullOrWhiteSpace(jwtKeyBase64))
 {
@@ -68,13 +65,11 @@ if (string.IsNullOrWhiteSpace(jwtKeyBase64))
 byte[] jwtKeyBytes;
 try
 {
-    // Attempt Base64 decode
     jwtKeyBytes = Convert.FromBase64String(jwtKeyBase64);
     Console.WriteLine("JWT Secret decoded from Base64.");
 }
 catch (FormatException)
 {
-    // If decoding fails, use plain text
     Console.WriteLine("JWT Secret is not Base64-encoded. Using it as plain text.");
     jwtKeyBytes = Encoding.UTF8.GetBytes(jwtKeyBase64);
 }
@@ -85,15 +80,19 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(jwtKeyBytes), // Correct key
+            IssuerSigningKey = new SymmetricSecurityKey(jwtKeyBytes),
             ValidateIssuer = true,
-            ValidIssuer = builder.Configuration["Jwt:Issuer"], // Must match `iss` claim in token
-            ValidateAudience = false, // Change to `true` if `aud` needs to be verified
-            ClockSkew = TimeSpan.Zero // Avoid time differences
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidateAudience = false,
+            ClockSkew = TimeSpan.Zero
         };
     });
 
-// Configure CORS
+// Stripe Configuration
+builder.Services.Configure<StripeSettings>(builder.Configuration.GetSection("Stripe"));
+Stripe.StripeConfiguration.ApiKey = builder.Configuration["Stripe:SecretKey"];
+
+// CORS Configuration
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
