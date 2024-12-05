@@ -1,7 +1,7 @@
 import axios from "axios";
 
 // Define the base URL for the API
-const BASE_URL = "http://51.120.6.249:5000/api/Bid";
+const BASE_URL = "http://51.120.6.249:5001/api/Bid";
 
 // DTO for placing a bid
 interface BidDto {

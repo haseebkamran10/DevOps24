@@ -14,7 +14,7 @@ interface RegisterUserDto {
 }
 
 // Base URL for the API
-const BASE_URL = "http://51.120.6.249:5000/api/User";
+const BASE_URL = "http://51.120.6.249:5001/api/User";
 
 /**
  * Add a new user.

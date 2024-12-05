@@ -6,7 +6,7 @@ interface StartSessionDto {
 }
 
 // Define the base URL for the API
-const BASE_URL = "http://51.120.6.249:5000/api/Session";
+const BASE_URL = "http://51.120.6.249:5001/api/Session";
 
 /**
  * Start a new session.
