@@ -6,6 +6,7 @@ using System.Text;
 using Backend.Models;
 using Backend.Data;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Stripe;
 
 var builder = WebApplication.CreateBuilder(args);
 
