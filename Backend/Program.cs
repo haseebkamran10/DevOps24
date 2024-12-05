@@ -44,28 +44,38 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+// Enable CORS middleware
+app.UseCors("AllowFrontend");
+
 // Middleware to handle OPTIONS preflight requests
 app.Use(async (context, next) =>
 {
     if (context.Request.Method == "OPTIONS")
     {
         context.Response.StatusCode = 204; // No Content
+        context.Response.Headers.Add("Access-Control-Allow-Origin", "*");
+        context.Response.Headers.Add("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, DELETE");
+        context.Response.Headers.Add("Access-Control-Allow-Headers", "Content-Type, Authorization");
         return;
     }
     await next.Invoke();
 });
 
-// Enable CORS
-app.UseCors("AllowFrontend");
-
+// Enable Swagger if in Development environment
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
+// Enable HTTPS redirection
 app.UseHttpsRedirection();
+
+// Enable authentication and authorization
+app.UseAuthentication();
 app.UseAuthorization();
+
+// Map controller endpoints
 app.MapControllers();
 
 app.Run();
