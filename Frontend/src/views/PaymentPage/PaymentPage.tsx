@@ -54,40 +54,41 @@ const PaymentPage: React.FC<PaymentPageProps> = ({ totalAmount, itemTitle }) => 
 
   const handleStripePayment = async (e: React.FormEvent) => {
     e.preventDefault();
-    setPaymentStatus('Payment successful!');
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      navigate('/confirmation');
-    }, 1000);
-
-    /*if (!stripe || !elements) {
-      setPaymentStatus('Stripe is not loaded. Please try again later.');
-      return;
-    }
-
-    const cardElement = elements.getElement(CardElement);
-    if (!cardElement) {
-      setPaymentStatus('Payment failed: Card information is missing.');
-      return;
-    }
-
-    setLoading(true);
-
+  
     try {
+      if (!stripe) {
+        setPaymentStatus('Stripe is not loaded. Please try again later.');
+        navigate('/confirmation');
+        return;
+      }
+  
+      // Simulate successful payment
+      setPaymentStatus('Payment successful!');
+      await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate some delay
+      navigate('/confirmation');
+  
+      /* Uncomment for actual Stripe API call
+      const cardElement = elements?.getElement(CardElement);
+      if (!cardElement) {
+        setPaymentStatus('Card information is missing.');
+        navigate('/confirmation');
+        return;
+      }
+  
       const response = await fetch('https://localhost:5001/api/payments/create-payment-intent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ amount: totalAmount }),
       });
-
+  
       if (!response.ok) {
         const errorDetails = await response.text();
         throw new Error(`Failed to create payment intent: ${errorDetails}`);
       }
-
+  
       const { clientSecret } = await response.json();
-
+  
       const result = await stripe.confirmCardPayment(clientSecret, {
         payment_method: {
           card: cardElement,
@@ -97,21 +98,21 @@ const PaymentPage: React.FC<PaymentPageProps> = ({ totalAmount, itemTitle }) => 
           },
         },
       });
-
+  
       if (result.error) {
         setPaymentStatus(`Payment failed: ${result.error.message}`);
-        navigate('/confirmation');
-      } else if (result.paymentIntent.status === 'succeeded') {
+      } else if (result.paymentIntent?.status === 'succeeded') {
         setPaymentStatus('Payment successful!');
-        navigate('/confirmation');
       }
+      */
     } catch (error: any) {
       setPaymentStatus(`Error: ${error.message}`);
-      navigate('/confirmation');
     } finally {
       setLoading(false);
-    }*/
+      navigate('/confirmation'); // Ensure navigation happens even if an error occurs
+    }
   };
+  
 
   const handlePayment = (e: React.FormEvent) => {
     e.preventDefault();
@@ -241,34 +242,31 @@ const PaymentPage: React.FC<PaymentPageProps> = ({ totalAmount, itemTitle }) => 
             <h3 className="text-2xl font-semibold mb-4 text-gray-800">Payment Method</h3>
 
             <div className="space-y-4">
-              <div
-                onClick={() => handlePaymentMethodChange('card')}
-                className={`flex flex-col p-4 border rounded-lg cursor-pointer 
-                ${selectedPaymentMethod === 'card' ? 'border-indigo-600 bg-indigo-50' : 'border-gray-300 bg-gray-50'}`}
-              >
-                <div className="flex items-center">
-                  <img
-                    src="/icons/atm-card.png"
-                    alt="Card Icon"
-                    className="h-6 mr-3"
-                  />
-                  <span className="text-gray-700">Pay with Card</span>
-                </div>
-                {selectedPaymentMethod === 'card' && (
-  
-                    <form onSubmit={handleStripePayment} className="mt-4">
-              <CardElement />
-              <button
-                type="submit"
-                disabled={loading || !stripe}
-                className="w-full mt-4 bg-indigo-600 text-white py-3 rounded-md font-bold hover:bg-indigo-700 transition duration-200"
-              >
-                {loading ? <Spinner /> : 'Pay with Stripe'}
-              </button>
-            </form>
-      
-                )}
-              </div>
+            <div
+  onClick={() => handlePaymentMethodChange('card')}
+  className={`flex flex-col p-4 border rounded-lg cursor-pointer 
+  ${selectedPaymentMethod === 'card' ? 'border-indigo-600 bg-indigo-50' : 'border-gray-300 bg-gray-50'}`}
+>
+  <div className="flex items-center">
+    <img src="/icons/atm-card.png" alt="Card Icon" className="h-6 mr-3" />
+    <span className="text-gray-700">Pay with Card</span>
+  </div>
+  {selectedPaymentMethod === 'card' && (
+    <div className="mt-4">
+      {/* Stripe Payment Elements */}
+      <CardElement />
+      <button
+        type="button"
+        disabled={loading || !stripe}
+        onClick={handleStripePayment}
+        className="w-full mt-4 bg-indigo-600 text-white py-3 rounded-md font-bold hover:bg-indigo-700 transition duration-200"
+      >
+        {loading ? <Spinner /> : 'Pay with Stripe'}
+      </button>
+    </div>
+  )}
+</div>
+
 
               <div
                 onClick={() => handlePaymentMethodChange('paypal')}
