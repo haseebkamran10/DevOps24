@@ -85,7 +85,6 @@ function SingleProductPage() {
         }
       }
     };
-  
     const interval = setInterval(checkAuctionEnd, 1000);
   
     return () => clearInterval(interval);
@@ -152,7 +151,7 @@ const handlePlaceBid = async () => {
             winnerName: winner.username || `${winner.firstName} ${winner.lastName}`,
             itemTitle: currentAuction.artwork.title,
             auctionEndDate: endDate.toLocaleDateString(),
-            imageUrl: auction.artwork.imageUrl,
+            imageUrl: currentAuction.artwork.imageUrl,
             highestBid: highestBid,
           },
         });
