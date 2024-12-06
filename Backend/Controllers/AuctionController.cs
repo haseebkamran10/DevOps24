@@ -118,6 +118,7 @@ public async Task<IActionResult> EndAuctionAsync([FromBody] EndAuctionDto endAuc
     {
         // Fetch the auction
         var auction = await _context.Auctions
+            .Include(a => a.Bids) // Include related bids
             .FirstOrDefaultAsync(a => a.AuctionId == endAuctionDto.AuctionId);
 
         if (auction == null)
@@ -125,23 +126,65 @@ public async Task<IActionResult> EndAuctionAsync([FromBody] EndAuctionDto endAuc
             return NotFound("Auction not found.");
         }
 
-        // Delete the auction
-        _context.Auctions.Remove(auction);
+        if (auction.IsClosed)
+        {
+            return BadRequest("Auction is already closed.");
+        }
 
-        // Save changes and commit the transaction
+        // Determine the highest valid bid
+        var winningBid = auction.Bids
+            .Where(b => b.BidAmount >= auction.MinimumPrice) // Only bids meeting the threshold
+            .OrderByDescending(b => b.BidAmount) // Sort by highest bid
+            .FirstOrDefault();
+
+        if (winningBid == null)
+        {
+            // Close auction with no winner
+            auction.IsClosed = true;
+            auction.UpdatedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation($"Auction {auction.AuctionId} ended with no valid winner.");
+            return Ok(new { message = "Auction ended with no valid bids meeting the threshold." });
+        }
+
+        // Announce the winner
+        var winner = new
+        {
+            userId = winningBid.UserId,
+            userName = await _context.Users
+                .Where(u => u.UserId == winningBid.UserId)
+                .Select(u => u.FirstName) // Replace 'Name' with the actual user property if different
+                .FirstOrDefaultAsync(),
+            bidAmount = winningBid.BidAmount
+        };
+
+        // Update auction status and save the winner
+        auction.IsClosed = true;
+        auction.CurrentBid = winningBid.BidAmount;
+        auction.UpdatedAt = DateTime.UtcNow;
+
         await _context.SaveChangesAsync();
         await transaction.CommitAsync();
 
-        _logger.LogInformation($"Auction {auction.AuctionId} has been successfully removed.");
-        return Ok(new { message = $"Auction {auction.AuctionId} has been removed successfully." });
+        // Log and return the winner details
+        _logger.LogInformation($"Auction {auction.AuctionId} ended successfully. Winner: {winner.userName} (User {winner.userId}), Bid: {winner.bidAmount}.");
+
+        return Ok(new
+        {
+            message = "Auction ended successfully.",
+            auctionId = auction.AuctionId,
+            winner
+        });
     }
     catch (Exception ex)
     {
         await transaction.RollbackAsync();
-        _logger.LogError($"Error removing auction {endAuctionDto.AuctionId}: {ex.Message}");
+        _logger.LogError($"Error ending auction {endAuctionDto.AuctionId}: {ex.Message}");
         return StatusCode(500, $"An error occurred: {ex.Message}");
     }
 }
+
 
 
     }

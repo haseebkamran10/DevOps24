@@ -11,9 +11,9 @@ namespace Backend.Models
         public int? UserId { get; set; }
         
         // Navigation property to User
-        public User User { get; set; }
+        public required User User { get; set; }
         
         // Navigation property to Bid
-        public List<Bid> Bids { get; set; }
+        public required List<Bid> Bids { get; set; }
     }
 }

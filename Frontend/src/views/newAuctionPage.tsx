@@ -8,7 +8,7 @@ import Spinner from "../components/ui/spinner"; // Adjust the path as needed
 import Toast from  "../components/ui/toast"; // Adjust the path as needed
 
 function NewAuctionPage() {
-  const [step, setStep] = useState(2); // Track current step (1: Artwork, 2: Auction)
+  const [step, setStep] = useState(1); // Track current step (1: Artwork, 2: Auction)
   const [artworkId, setArtworkId] = useState<number | null>(null); // Store artwork ID
   const [loading, setLoading] = useState(false); // Loading state
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);

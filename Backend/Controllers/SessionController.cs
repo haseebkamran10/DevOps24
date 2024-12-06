@@ -51,7 +51,11 @@ namespace Backend.Controllers
                     SessionId = Guid.NewGuid(),
                     CreatedAt = DateTime.UtcNow,
                     ExpiresAt = DateTime.UtcNow.AddHours(1),
-                    UserId = user.UserId
+                    UserId = user.UserId,
+                    User = user,
+                    Bids = new List<Bid>()
+
+                    
                 };
 
                 await _context.Sessions.AddAsync(session);

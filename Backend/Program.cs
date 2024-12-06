@@ -13,7 +13,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddHostedService<AuctionManagementService>();
+/*builder.Services.AddHostedService<AuctionManagementService>();*/
 
 // Configure Swagger with JWT authentication
 builder.Services.AddSwaggerGen(c =>
