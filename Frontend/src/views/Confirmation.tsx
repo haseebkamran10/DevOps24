@@ -46,20 +46,9 @@ const ConfirmationPage: React.FC = () => {
 
         {/* User Details */}
         {userDetails ? (
-          <div className="text-left text-black space-y-2">
-            <p>
-              <strong>Address:</strong> {userDetails.addressLine}
-            </p>
-            <p>
-              <strong>City:</strong> {userDetails.city}
-            </p>
-            <p>
-              <strong>Postal Code:</strong> {userDetails.zip}
-            </p>
-            <p>
-              <strong>Country:</strong> {userDetails.country}
-            </p>
-          </div>
+          <p className="text-lg text-black">
+            <strong>Address:</strong> {userDetails.addressLine}, {userDetails.city}, {userDetails.zip}, {userDetails.country}
+          </p>
         ) : (
           <p className="text-red-600">User details not found. Please log in again.</p>
         )}

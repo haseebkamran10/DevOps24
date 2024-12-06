@@ -16,9 +16,10 @@ const WinnerPage: React.FC<WinnerPageProps> = () => {
       state: {
         winnerName: winnerName,
         itemTitle: itemTitle,
-        imageUrl:imageUrl,
+        imageUrl:imageUrl, 
         highestBid: highestBid,
       },
+      
     });
   };
   return (

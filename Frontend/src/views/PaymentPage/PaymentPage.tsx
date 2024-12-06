@@ -62,10 +62,10 @@ const PaymentPage: React.FC<PaymentPageProps> = () => {
         setPaymentStatus('Stripe is not loaded. Please try again later.');
         navigate('/confirmation', {
           state: {
-            imageUrl,
-            itemTitle,
-            winnerName,
-            highestBid,
+            imageUrl:imageUrl, 
+            itemTitle:itemTitle,
+            winnerName:winnerName,
+            highestBid:highestBid,
             deliveryDetails,
           },
         });
@@ -77,10 +77,10 @@ const PaymentPage: React.FC<PaymentPageProps> = () => {
       await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate some delay
       navigate('/confirmation', {
         state: {
-          imageUrl,
-          itemTitle,
-          winnerName,
-          highestBid,
+          imageUrl:imageUrl, 
+          itemTitle:itemTitle,
+          winnerName:winnerName,
+          highestBid:highestBid,
           deliveryDetails,
         },
       });
