@@ -107,12 +107,8 @@ function SingleProductPage() {
     } catch (error) {
       //console.error("Error fetching bids:", error);
       //setToast({ message: "Failed to fetch bids.", type: "error" }); 
-    } finally {
-      setLoading(false);
-    }
+    } 
   };
-
-  console.log("auction id = "+auction.auctionId)
 
 const handlePlaceBid = async () => {
   const phoneNumber = localStorage.getItem("phoneNumber");
@@ -156,7 +152,7 @@ const handlePlaceBid = async () => {
             winnerName: winner.username || `${winner.firstName} ${winner.lastName}`,
             itemTitle: currentAuction.artwork.title,
             auctionEndDate: endDate.toLocaleDateString(),
-            imageUrl: currentAuction.artwork.imageUrl,
+            imageUrl: auction.artwork.imageUrl,
             highestBid: highestBid,
           },
         });
@@ -193,10 +189,8 @@ const handlePlaceBid = async () => {
     await endAuction({ auctionId: auction.auctionId });
   } catch (error) {
     //console.error("Error placing bid:", error);
-    setToast({ message: "Failed to place bid.", type: "error"}); 
-  } finally {
-    setLoading(false);
-  }
+    //setToast({ message: "Failed to place bid.", type: "error"}); 
+  } 
 };
   useEffect(() => {
     if (!auction?.endTime) return;
