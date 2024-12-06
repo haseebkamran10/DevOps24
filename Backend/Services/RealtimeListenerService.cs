@@ -1,13 +1,7 @@
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Configuration;
-using System;
-using System.Net.Http;
-using System.Net.Http.Json;
 using System.Net.WebSockets;
-using System.Threading;
-using System.Threading.Tasks;
+
 using System.Text;
-using System.Text.Json;
+
 
 namespace Backend.Services
 {
@@ -41,7 +35,7 @@ namespace Backend.Services
             catch (Exception ex)
             {
                 Console.WriteLine($"Failed to connect WebSocket: {ex.Message}");
-                // Optionally implement reconnect logic
+                
             }
         }
 
@@ -55,7 +49,7 @@ namespace Backend.Services
                 {
                     var message = Encoding.UTF8.GetString(buffer, 0, result.Count);
                     Console.WriteLine($"Message received: {message}");
-                    // Process the message
+                
                 }
             }
             await _webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, cancellationToken);

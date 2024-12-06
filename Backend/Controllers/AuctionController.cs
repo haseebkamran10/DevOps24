@@ -15,15 +15,15 @@ namespace Backend.Controllers
     public class AuctionController : ControllerBase
     {
         private readonly DatabaseContext _context;
-        private readonly ILogger<AuctionController> _logger; // Declare the logger
+        private readonly ILogger<AuctionController> _logger; 
 
-        public AuctionController(DatabaseContext context, ILogger<AuctionController> logger) // Inject the logger
+        public AuctionController(DatabaseContext context, ILogger<AuctionController> logger) 
         {
             _context = context;
             _logger = logger;
         }
 
-        // Endpoint to start an auction
+
         [HttpPost("start")]
         public async Task<IActionResult> StartAuctionAsync([FromBody] AuctionDto auctionDto)
         {
@@ -36,14 +36,14 @@ namespace Backend.Controllers
 
             try
             {
-                // Validate user by phone number
+     
                 var user = await _context.Users.SingleOrDefaultAsync(u => u.PhoneNumber == auctionDto.PhoneNumber);
                 if (user == null)
                 {
                     return NotFound("User not found.");
                 }
 
-                // Check if user has an active session
+    
                 var activeSession = await _context.Sessions
                     .FirstOrDefaultAsync(s => s.UserId == user.UserId && s.ExpiresAt > DateTime.UtcNow);
                 if (activeSession == null)
@@ -51,21 +51,21 @@ namespace Backend.Controllers
                     return Unauthorized("No active session found. Please start a session first.");
                 }
 
-                // Validate ownership of the artwork
+          
                 var artwork = await _context.Artworks.FirstOrDefaultAsync(a => a.ArtworkId == auctionDto.ArtworkId && a.UserId == user.UserId);
                 if (artwork == null)
                 {
                     return NotFound("Artwork not found or you do not have permission to auction this artwork.");
                 }
 
-                // Check if the artwork is already auctioned
+             
                 var existingAuction = await _context.Auctions.FirstOrDefaultAsync(a => a.ArtworkId == auctionDto.ArtworkId && !a.IsClosed);
                 if (existingAuction != null)
                 {
                     return BadRequest("An active auction already exists for this artwork.");
                 }
 
-                // Create the auction
+           
                 var auction = new Auction
                 {
                     ArtworkId = auctionDto.ArtworkId,
@@ -91,7 +91,7 @@ namespace Backend.Controllers
             }
         }
 
-        // Endpoint to get active auctions
+      
         [HttpGet("active")]
         public async Task<IActionResult> GetActiveAuctionsAsync()
         {
@@ -103,7 +103,7 @@ namespace Backend.Controllers
             return Ok(activeAuctions);
         }
 
-        // Endpoint to end an auction
+       
 [HttpPost("end")]
 public async Task<IActionResult> EndAuctionAsync([FromBody] EndAuctionDto endAuctionDto)
 {
@@ -116,7 +116,7 @@ public async Task<IActionResult> EndAuctionAsync([FromBody] EndAuctionDto endAuc
 
     try
     {
-        // Fetch the auction
+    
         var auction = await _context.Auctions
             .FirstOrDefaultAsync(a => a.AuctionId == endAuctionDto.AuctionId);
 
@@ -125,10 +125,10 @@ public async Task<IActionResult> EndAuctionAsync([FromBody] EndAuctionDto endAuc
             return NotFound("Auction not found.");
         }
 
-        // Delete the auction
+
         _context.Auctions.Remove(auction);
 
-        // Save changes and commit the transaction
+  
         await _context.SaveChangesAsync();
         await transaction.CommitAsync();
 

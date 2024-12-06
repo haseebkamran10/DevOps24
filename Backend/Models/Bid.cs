@@ -1,4 +1,4 @@
-using System;
+
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -21,7 +21,6 @@ namespace Backend.Models
         [Column(TypeName = "decimal(18, 2)")]
         public decimal BidAmount { get; set; }
 
-        // Explicitly map this as `timestamp without time zone`
         public DateTime BidTime { get; set; }
 
         [ForeignKey("Session")]

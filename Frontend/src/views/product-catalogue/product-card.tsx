@@ -13,7 +13,6 @@ interface ProductCardProps {
 export default function ProductCard({
   imageSrc = "/placeholder.svg?height=300&width=400",
   productName = "Minimalist Watch",
-  //description = "Sleek design for everyday elegance",
   listing = 129.99,
   category = "Accessories",
 }: ProductCardProps) {

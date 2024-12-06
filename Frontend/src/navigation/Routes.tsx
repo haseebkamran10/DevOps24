@@ -10,18 +10,20 @@ import PaymentPage from "@/views/PaymentPage/PaymentPage";
 import WinnerPage from "@/views/WinnerPage/WinnerPage";
 import NewAuctionPage from "@/views/newAuctionPage";
 import SignupPage from "@/views/SignupPage/SignupPage";
+import ConfirmationPage from "@/views/Confirmation";
+
 
 export const routes: RouteObject[] = [
   {
     path: "/",
-    element: <Layout />, // Root layout
+    element: <Layout />, 
     children: [
       {
-        index: true, // Default route under Layout
+        index: true, 
         element: <Home />,
       },
       {
-        path: "products", // Relative path (no leading slash)
+        path: "products",
         element: <ProductCatalogPage />,
       },
       {
@@ -46,7 +48,11 @@ export const routes: RouteObject[] = [
       },
       {
         path: "paymentpage",
-        element: <PaymentPage totalAmount={0} itemTitle={""} />,
+        element: <PaymentPage/>,
+      },
+      {
+        path: "confirmation",
+        element: <ConfirmationPage />,
       },
       {
         path: "winners",

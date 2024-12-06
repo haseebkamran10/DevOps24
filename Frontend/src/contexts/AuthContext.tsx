@@ -5,7 +5,7 @@ interface AuthContextProps {
   userAvatar: string | null;
   setUserName: (name: string | null) => void;
   setUserAvatar: (avatar: string | null) => void;
-  triggerForceRender: () => void; // Expose this to force updates globally
+  triggerForceRender: () => void;
 }
 
 const AuthContext = createContext<AuthContextProps | undefined>(undefined);
@@ -22,20 +22,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const storedUserAvatar = localStorage.getItem("userAvatar");
     if (storedUserName) setUserName(storedUserName);
     if (storedUserAvatar) setUserAvatar(storedUserAvatar);
-  }, [forceRender]); // Re-fetch on `forceRender` changes
+  }, [forceRender]);
 
   const setUserNameWithStorage = (name: string | null) => {
     setUserName(name);
     if (name) localStorage.setItem("userName", name);
     else localStorage.removeItem("userName");
-    triggerForceRender(); // Force re-render
+    triggerForceRender();
   };
 
   const setUserAvatarWithStorage = (avatar: string | null) => {
     setUserAvatar(avatar);
     if (avatar) localStorage.setItem("userAvatar", avatar);
     else localStorage.removeItem("userAvatar");
-    triggerForceRender(); // Force re-render
+    triggerForceRender();
   };
 
   return (

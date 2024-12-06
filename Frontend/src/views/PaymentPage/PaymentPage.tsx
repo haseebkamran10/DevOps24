@@ -1,5 +1,11 @@
 import React, { useState } from 'react';
+import { useStripe, CardElement, Elements } from '@stripe/react-stripe-js';
+import { loadStripe } from '@stripe/stripe-js';
 import { useNavigate } from 'react-router-dom';
+import Spinner from '@/components/ui/spinner';
+
+// Initialize Stripe
+const stripePromise = loadStripe("pk_test_51Oiyy5FgRV0MG2KqZIHLI7vbTuqEAeVPLwgiUXd7gFdGZyUHhjtXAY7pmEcMbTPuinNQCPAuwOTAKxKY8Xp1N6NU00cASQWq8g");
 
 interface PaymentPageProps {
   totalAmount: number;
@@ -7,7 +13,10 @@ interface PaymentPageProps {
 }
 
 const PaymentPage: React.FC<PaymentPageProps> = ({ totalAmount, itemTitle }) => {
-  const [paymentDetails, setPaymentDetails] = useState({
+  const stripe = useStripe();
+  const navigate = useNavigate();
+
+  const [paymentDetails] = useState({
     cardNumber: '',
     expiryDate: '',
     cvv: '',
@@ -24,22 +33,8 @@ const PaymentPage: React.FC<PaymentPageProps> = ({ totalAmount, itemTitle }) => 
 
   const [mobilePayPhoneNumber, setMobilePayPhoneNumber] = useState('');
   const [paymentStatus, setPaymentStatus] = useState<string | null>(null);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string | null>(null); // Remove preselection
-  const navigate = useNavigate();
-
-  const handlePaymentInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-
-    // Validate based on field name
-    if (name === 'cardNumber' && !/^\d{0,16}$/.test(value)) return;
-    if (name === 'expiryDate' && !/^\d{0,2}\/?\d{0,2}$/.test(value)) return;
-    if (name === 'cvv' && !/^\d{0,3}$/.test(value)) return;
-
-    setPaymentDetails({
-      ...paymentDetails,
-      [name]: value,
-    });
-  };
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string | null>('stripe');
+  const [loading, setLoading] = useState(false);
 
   const handleDeliveryInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -56,6 +51,68 @@ const PaymentPage: React.FC<PaymentPageProps> = ({ totalAmount, itemTitle }) => 
   const handlePaymentMethodChange = (method: string) => {
     setSelectedPaymentMethod(method);
   };
+
+  const handleStripePayment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+  
+    try {
+      if (!stripe) {
+        setPaymentStatus('Stripe is not loaded. Please try again later.');
+        navigate('/confirmation');
+        return;
+      }
+  
+      // Simulate successful payment
+      setPaymentStatus('Payment successful!');
+      await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate some delay
+      navigate('/confirmation');
+  
+      /* Uncomment for actual Stripe API call
+      const cardElement = elements?.getElement(CardElement);
+      if (!cardElement) {
+        setPaymentStatus('Card information is missing.');
+        navigate('/confirmation');
+        return;
+      }
+  
+      const response = await fetch('https://localhost:5001/api/payments/create-payment-intent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount: totalAmount }),
+      });
+  
+      if (!response.ok) {
+        const errorDetails = await response.text();
+        throw new Error(`Failed to create payment intent: ${errorDetails}`);
+      }
+  
+      const { clientSecret } = await response.json();
+  
+      const result = await stripe.confirmCardPayment(clientSecret, {
+        payment_method: {
+          card: cardElement,
+          billing_details: {
+            name: deliveryDetails.name,
+            email: 'customer@example.com',
+          },
+        },
+      });
+  
+      if (result.error) {
+        setPaymentStatus(`Payment failed: ${result.error.message}`);
+      } else if (result.paymentIntent?.status === 'succeeded') {
+        setPaymentStatus('Payment successful!');
+      }
+      */
+    } catch (error: any) {
+      setPaymentStatus(`Error: ${error.message}`);
+    } finally {
+      setLoading(false);
+      navigate('/confirmation'); // Ensure navigation happens even if an error occurs
+    }
+  };
+  
 
   const handlePayment = (e: React.FormEvent) => {
     e.preventDefault();
@@ -83,8 +140,8 @@ const PaymentPage: React.FC<PaymentPageProps> = ({ totalAmount, itemTitle }) => 
       <h1 className="text-4xl font-bold mb-8 text-gray-800">Checkout</h1>
 
       <div className="flex flex-col lg:flex-row w-full max-w-6xl space-y-6 lg:space-y-0 lg:space-x-6">
-        {/* Delivery Section */}
-        <div className="w-full lg:w-2/3 bg-white p-8 rounded-lg shadow-lg text-black">
+          {/* Delivery Section */}
+          <div className="w-full lg:w-2/3 bg-white p-8 rounded-lg shadow-lg text-black">
           <h3 className="text-2xl font-semibold mb-6 text-gray-800">Delivery Information</h3>
           
           <div className="space-y-4 text-left">
@@ -173,9 +230,8 @@ const PaymentPage: React.FC<PaymentPageProps> = ({ totalAmount, itemTitle }) => 
             </div>
           </div>
         </div>
-
-        {/* Payment Section */}
-        <div className="w-full lg:w-1/3 bg-white p-8 rounded-lg shadow-lg text-black">
+   {/* Payment Section */}
+   <div className="w-full lg:w-1/3 bg-white p-8 rounded-lg shadow-lg text-black">
           <h3 className="text-2xl font-semibold mb-6 text-gray-800">Your Cart</h3>
           <div className="mb-6">
             <p className="text-gray-600">Product: <span className="font-medium">{itemTitle}</span></p>
@@ -186,65 +242,31 @@ const PaymentPage: React.FC<PaymentPageProps> = ({ totalAmount, itemTitle }) => 
             <h3 className="text-2xl font-semibold mb-4 text-gray-800">Payment Method</h3>
 
             <div className="space-y-4">
-              <div
-                onClick={() => handlePaymentMethodChange('card')}
-                className={`flex flex-col p-4 border rounded-lg cursor-pointer 
-                ${selectedPaymentMethod === 'card' ? 'border-indigo-600 bg-indigo-50' : 'border-gray-300 bg-gray-50'}`}
-              >
-                <div className="flex items-center">
-                  <img
-                    src="/icons/atm-card.png"
-                    alt="Card Icon"
-                    className="h-6 mr-3"
-                  />
-                  <span className="text-gray-700">Pay with Card</span>
-                </div>
-                {selectedPaymentMethod === 'card' && (
-                  <div className="mt-4 space-y-4">
-                    <div>
-                      <label htmlFor="cardNumber" className="block text-sm font-medium text-gray-600">Card Number</label>
-                      <input
-                        type="text"
-                        id="cardNumber"
-                        name="cardNumber"
-                        value={paymentDetails.cardNumber}
-                        onChange={handlePaymentInputChange}
-                        required
-                        className="mt-1 block w-full p-3 border border-gray-300 rounded-md bg-white"
-                        placeholder="1234 5678 9123 4567"
-                      />
-                    </div>
-                    <div className="flex space-x-4">
-                      <div>
-                        <label htmlFor="expiryDate" className="block text-sm font-medium text-gray-600">Expiry Date</label>
-                        <input
-                          type="text"
-                          id="expiryDate"
-                          name="expiryDate"
-                          value={paymentDetails.expiryDate}
-                          onChange={handlePaymentInputChange}
-                          required
-                          className="mt-1 block w-full p-3 border border-gray-300 rounded-md bg-white"
-                          placeholder="MM/YY"
-                        />
-                      </div>
-                      <div>
-                        <label htmlFor="cvv" className="block text-sm font-medium text-gray-600">CVV</label>
-                        <input
-                          type="text"
-                          id="cvv"
-                          name="cvv"
-                          value={paymentDetails.cvv}
-                          onChange={handlePaymentInputChange}
-                          required
-                          className="mt-1 block w-full p-3 border border-gray-300 rounded-md bg-white"
-                          placeholder="123"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
+            <div
+  onClick={() => handlePaymentMethodChange('card')}
+  className={`flex flex-col p-4 border rounded-lg cursor-pointer 
+  ${selectedPaymentMethod === 'card' ? 'border-indigo-600 bg-indigo-50' : 'border-gray-300 bg-gray-50'}`}
+>
+  <div className="flex items-center">
+    <img src="/icons/atm-card.png" alt="Card Icon" className="h-6 mr-3" />
+    <span className="text-gray-700">Pay with Card</span>
+  </div>
+  {selectedPaymentMethod === 'card' && (
+    <div className="mt-4">
+      {/* Stripe Payment Elements */}
+      <CardElement />
+      <button
+        type="button"
+        disabled={loading || !stripe}
+        onClick={handleStripePayment}
+        className="w-full mt-4 bg-indigo-600 text-white py-3 rounded-md font-bold hover:bg-indigo-700 transition duration-200"
+      >
+        {loading ? <Spinner /> : 'Pay with Stripe'}
+      </button>
+    </div>
+  )}
+</div>
+
 
               <div
                 onClick={() => handlePaymentMethodChange('paypal')}
@@ -257,7 +279,10 @@ const PaymentPage: React.FC<PaymentPageProps> = ({ totalAmount, itemTitle }) => 
                   className="h-6 mr-3"
                 />
                 <span className="text-gray-700">Pay with PayPal</span>
+              
+                
               </div>
+              
 
               <div
                 onClick={() => handlePaymentMethodChange('mobilepay')}
@@ -290,23 +315,36 @@ const PaymentPage: React.FC<PaymentPageProps> = ({ totalAmount, itemTitle }) => 
                       className="mt-1 block w-full p-3 border border-gray-300 rounded-md bg-white"
                       placeholder="+45 31455327"
                     />
+                          <button
+                type="submit"
+                disabled={loading || !stripe}
+                className="w-full mt-4 bg-indigo-600 text-white py-3 rounded-md font-bold hover:bg-indigo-700 transition duration-200"
+              >
+                {loading ? <Spinner /> : 'Pay'}
+              </button>
                   </div>
                 )}
               </div>
             </div>
-
-            <button
-              type="submit"
-              className="w-full mt-6 bg-indigo-600 text-white py-3 rounded-md font-bold hover:bg-indigo-700 transition duration-200"
-            >
-              Confirm Payment
-            </button>
-          </form>
-
+            </form>
+          {/* Stripe Payment */}
+          {selectedPaymentMethod === 'Pay with Card' && (
+            <form onSubmit={handleStripePayment} className="mt-4">
+              <CardElement />
+              <button
+                type="submit"
+                disabled={loading || !stripe}
+                className="w-full mt-4 bg-indigo-600 text-white py-3 rounded-md font-bold hover:bg-indigo-700 transition duration-200"
+              >
+                {loading ? <Spinner /> : 'Pay'}
+              </button>
+            </form>
+          )}
+          {/* Payment Status */}
           {paymentStatus && (
-            <p className="mt-4 text-lg font-semibold text-green-600">
-              {paymentStatus}
-            </p>
+            <div className="mt-6 text-center text-gray-800">
+              <p>{paymentStatus}</p>
+            </div>
           )}
         </div>
       </div>
@@ -314,4 +352,10 @@ const PaymentPage: React.FC<PaymentPageProps> = ({ totalAmount, itemTitle }) => 
   );
 };
 
-export default PaymentPage;
+export default function App() {
+  return (
+    <Elements stripe={stripePromise}>
+      <PaymentPage totalAmount={49.99} itemTitle="Sample Item" />
+    </Elements>
+  );
+}

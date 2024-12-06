@@ -1,8 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore; // Ensure this is included
-using System;
-using System.Linq;
-using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 using Backend.Data;
 using Backend.Models;
 using Backend.DTOs;
@@ -20,7 +17,7 @@ namespace Backend.Controllers
             _context = context;
         }
 
-        // Starts a new session and links it to a user based on the phone number
+    
         [HttpPost("start")]
         public async Task<IActionResult> StartSessionAsync([FromBody] StartSessionDto sessionDto)
         {
@@ -57,7 +54,7 @@ namespace Backend.Controllers
                 await _context.Sessions.AddAsync(session);
                 user.LastSessionId = session.SessionId;
 
-                // Update the `updated_at` field
+               
                 user.UpdatedAt = DateTime.UtcNow;
 
                 await _context.SaveChangesAsync();
@@ -72,7 +69,6 @@ namespace Backend.Controllers
             }
         }
 
-        // Ends an existing session and removes it from the database
         [HttpPost("end")]
         public IActionResult EndSession(Guid sessionId)
         {

@@ -19,7 +19,7 @@ namespace Backend.Tests
 
         public UserControllerTests()
         {
-            // Setup InMemory database for testing
+
             _options = new DbContextOptionsBuilder<DatabaseContext>()
                 .UseInMemoryDatabase("TestDatabase")
                 .Options;
@@ -30,7 +30,7 @@ namespace Backend.Tests
         [Fact]
         public async Task AddUser_Should_Return_Ok_When_User_Added()
         {
-            // Arrange
+          
             using var context = new DatabaseContext(_options);
             var controller = new UserController(context, _mockLogger.Object);
 
@@ -47,22 +47,24 @@ namespace Backend.Tests
                 Country = "Country"
             };
 
-            // Act
+        
             var result = await controller.AddUser(userDto);
 
-            // Assert
+         
             var okResult = Assert.IsType<OkObjectResult>(result);
             var response = okResult.Value as dynamic;
 
             Assert.NotNull(response);
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
             Assert.Equal("User added successfully.", response.message);
-            Assert.True(response.userId > 0); // User ID should be greater than 0 (i.e., it should be inserted)
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
+            Assert.True(response.userId > 0); 
         }
 
         [Fact]
         public async Task GetUser_Should_Return_User_When_Found()
         {
-            // Arrange
+         
             using var context = new DatabaseContext(_options);
             var user = new User
             {
@@ -84,10 +86,10 @@ namespace Backend.Tests
 
             var controller = new UserController(context, _mockLogger.Object);
 
-            // Act
+   
             var result = await controller.GetUser(user.UserId);
 
-            // Assert
+        
             var okResult = Assert.IsType<OkObjectResult>(result);
             var retrievedUser = Assert.IsType<User>(okResult.Value);
 
@@ -99,14 +101,14 @@ namespace Backend.Tests
         [Fact]
         public async Task GetUser_Should_Return_NotFound_When_User_Not_Found()
         {
-            // Arrange
+            
             using var context = new DatabaseContext(_options);
             var controller = new UserController(context, _mockLogger.Object);
 
-            // Act
-            var result = await controller.GetUser(999); // Non-existent user ID
+     
+            var result = await controller.GetUser(999);
 
-            // Assert
+        
             var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
             Assert.Equal("User not found.", notFoundResult.Value);
         }
@@ -114,7 +116,7 @@ namespace Backend.Tests
         [Fact]
         public async Task GetUserByPhoneNumber_Should_Return_User_When_Found()
         {
-            // Arrange
+          
             using var context = new DatabaseContext(_options);
             var user = new User
             {
@@ -136,29 +138,31 @@ namespace Backend.Tests
 
             var controller = new UserController(context, _mockLogger.Object);
 
-            // Act
+          
             var result = await controller.GetUserByPhoneNumber(user.PhoneNumber);
 
-            // Assert
+       
             var okResult = Assert.IsType<OkObjectResult>(result);
             var response = okResult.Value as dynamic;
 
             Assert.NotNull(response);
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
             Assert.Equal(user.FirstName, response.FirstName);
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
             Assert.Equal(user.PhoneNumber, response.PhoneNumber);
         }
 
         [Fact]
         public async Task GetUserByPhoneNumber_Should_Return_NotFound_When_User_Not_Found()
         {
-            // Arrange
+           
             using var context = new DatabaseContext(_options);
             var controller = new UserController(context, _mockLogger.Object);
 
-            // Act
-            var result = await controller.GetUserByPhoneNumber("5550000000"); // Non-existent phone number
+            
+            var result = await controller.GetUserByPhoneNumber("5550000000"); 
 
-            // Assert
+       
             var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
             Assert.Equal("User not found.", notFoundResult.Value);
         }

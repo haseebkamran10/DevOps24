@@ -3,7 +3,7 @@ import {
   AccordionContent,
   AccordionItem,
 } from "@/components/ui/accordion";
-import ProductCard from "@/views/product-catalogue/product-card"; // Adjust the import path as necessary
+import ProductCard from "@/views/product-catalogue/product-card"; 
 
 export default function ProductCatalogPage() {
   const products = [

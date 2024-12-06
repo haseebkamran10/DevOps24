@@ -1,24 +1,24 @@
 import { FormEvent, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
-import { addUser } from "../../services/UserService"; // Ensure the path is correct
-import Spinner from "../../components/ui/spinner"; // Adjust the path as needed
-import Toast from  "../../components/ui/toast"; // Adjust the path as needed
+import { addUser } from "../../services/UserService";
+import Spinner from "../../components/ui/spinner"; 
+import Toast from  "../../components/ui/toast"; 
 
 
 const SignupPage = () => {
   const bannerRef = useRef<HTMLImageElement>(null);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  const [username, setUsername] = useState(""); // Optional username
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [addressLine, setAddressLine] = useState("");
   const [city, setCity] = useState("");
   const [zip, setZip] = useState("");
   const [country, setCountry] = useState("");
-  const [password, setPassword] = useState(""); // Dummy password
-  const [confirmPassword, setConfirmPassword] = useState(""); // Dummy confirm password
+  const [password, setPassword] = useState(""); 
+  const [confirmPassword, setConfirmPassword] = useState(""); 
   const [isLoading, setIsLoading] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 

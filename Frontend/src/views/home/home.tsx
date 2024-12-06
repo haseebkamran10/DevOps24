@@ -5,40 +5,28 @@ import { getActiveAuctions, ActiveAuction } from "@/services/auctionService";
 import Spinner from "../../components/ui/spinner";
 import Toast from "../../components/ui/toast";
 import { usePersistent } from "../../contexts/PersistentContext";
+import { getAllArtworks } from "@/services";
 
 const HomePage = () => {
   const bannerRef = useRef<HTMLImageElement>(null);
   const [opacity, setOpacity] = useState(0.7);
-  const { getState, setState } = usePersistent(); // Persistent state
+  const { getState, setState } = usePersistent();
   const [ongoingAuctions, setOngoingAuctions] = useState<ActiveAuction[]>(
-    () => getState("ongoingAuctions") || [] // Load from localStorage if available
+    () => getState("ongoingAuctions") || [] 
   );
   const [loading, setLoading] = useState(ongoingAuctions.length === 0);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
+  
 
   useScrollEffect(bannerRef, setOpacity);
+  const [artworks, setArtworks] = useState<Artwork[]>(() => getState("artworks") || []);
 
-  const artworks = [
-    {
-      name: "Lion Magnifiqué",
-      artist: "Marius Picasso",
-      imgSrc: "lion-painting.png",
-      link: "/SingleProductPage",
-    },
-    {
-      name: "Sunset Overdrive",
-      artist: "Haseeb",
-      imgSrc: "lion-painting2.jpg",
-      link: "/SingleProductPage",
-    },
-    {
-      name: "Abstract Delight",
-      artist: "Fathi",
-      imgSrc: "artwork_3.jpg",
-      link: "/SingleProductPage",
-    },
-  ];
-
+  interface Artwork {
+    name: string;
+    artist: string;
+    imgSrc: string;
+    link: string;
+  }
   const auctions = [
     {
       name: "Modern Masterpiece",
@@ -61,13 +49,13 @@ const HomePage = () => {
   ];
 
   useEffect(() => {
-    if (ongoingAuctions.length > 0) return; // Skip API call if data is already cached
+    if (ongoingAuctions.length > 0) return; 
 
     const fetchAuctions = async () => {
       try {
         const auctions = await getActiveAuctions();
         setOngoingAuctions(auctions);
-        setState("ongoingAuctions", auctions); // Persist in localStorage
+        setState("ongoingAuctions", auctions);
         setToast({ message: "Auctions fetched successfully!", type: "success" });
       } catch (error) {
         console.error("Failed to fetch ongoing auctions:", error);
@@ -79,6 +67,33 @@ const HomePage = () => {
 
     fetchAuctions();
   }, [setState, getState, ongoingAuctions.length]);
+
+  useEffect(() => {
+    if (artworks.length > 0) return;
+
+    const fetchArtworks = async () => {
+      setLoading(true);
+      try {
+        const fetchedArtworks = await getAllArtworks();
+        const formattedArtworks = fetchedArtworks.map((art) => ({
+          name: art.title,
+          artist: art.artist,
+          imgSrc: art.imageUrl,
+          link: `/SingleProductPage/${art.artworkId}`, 
+        }));
+        setArtworks(formattedArtworks);
+        setState("artworks", formattedArtworks);
+        setToast({ message: "Artworks fetched successfully!", type: "success" });
+      } catch (error) {
+        console.error("Failed to fetch artworks:", error);
+        setToast({ message: "Failed to fetch artworks. Please try again.", type: "error" });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchArtworks();
+  }, [artworks, setState]);
 
   return (
     <>
@@ -101,7 +116,7 @@ const HomePage = () => {
         <div className="container mx-auto px-5 md:px-10 py-10 md:py-20">
           <h2 className="text-2xl md:text-3xl font-bold mb-6">Featured Artworks</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {artworks.map((art, index) => (
+            {artworks.map((art:Artwork, index:  number) => (
               <div
                 key={index}
                 className="shadow-lg rounded-lg overflow-hidden w-full max-w-xs mx-auto"

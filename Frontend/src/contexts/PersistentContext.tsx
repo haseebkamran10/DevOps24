@@ -12,7 +12,6 @@ const PersistentContext = createContext<PersistentContextProps | undefined>(unde
 export const PersistentProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [state, setStateInternal] = useState<{ [key: string]: any }>({});
 
-  // Initialize from localStorage
   useEffect(() => {
     const storedState = Object.keys(localStorage).reduce((acc, key) => {
       try {

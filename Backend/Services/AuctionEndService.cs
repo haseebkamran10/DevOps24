@@ -1,10 +1,5 @@
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
+
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using Backend.Data;
 using Backend.Models;
 
@@ -27,13 +22,13 @@ public class AuctionManagementService : BackgroundService
         {
             try
             {
-                // Create a new DbContext instance for this iteration
+             
                 using var dbContext = _dbContextFactory.CreateDbContext();
                 var executionStrategy = dbContext.Database.CreateExecutionStrategy();
 
                 await executionStrategy.ExecuteAsync(async () =>
                 {
-                    // Fetch auctions that need to be closed
+                 
                     var auctionsToClose = await dbContext.Auctions
                         .AsNoTracking()
                         .Include(a => a.Bids)
@@ -48,7 +43,7 @@ public class AuctionManagementService : BackgroundService
 
                     _logger.LogInformation($"Found {auctionsToClose.Count} auctions to process.");
 
-                    // Limit parallelism to avoid resource exhaustion
+                  
                     const int maxParallelism = 2;
                     var semaphore = new SemaphoreSlim(maxParallelism);
 
@@ -75,7 +70,7 @@ public class AuctionManagementService : BackgroundService
                 _logger.LogError($"An error occurred while processing auctions: {ex}");
             }
 
-            // Wait for a minute before checking again
+            
             await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
         }
 
@@ -84,18 +79,18 @@ public class AuctionManagementService : BackgroundService
 
     private async Task ProcessAuctionAsync(Auction auction, CancellationToken stoppingToken)
     {
-        // Create a new DbContext instance for processing each auction
+        
         using var dbContext = _dbContextFactory.CreateDbContext();
         using var transaction = await dbContext.Database.BeginTransactionAsync(stoppingToken);
 
         try
         {
-            // Reload auction with tracking
+           
             var auctionForUpdate = await dbContext.Auctions
                 .Include(a => a.Bids)
                 .FirstAsync(a => a.AuctionId == auction.AuctionId, stoppingToken);
 
-            // Find the winning bid
+           
             var winningBid = auctionForUpdate.Bids
                 .Where(b => b.BidAmount >= auction.MinimumPrice)
                 .OrderByDescending(b => b.BidAmount)
@@ -103,7 +98,7 @@ public class AuctionManagementService : BackgroundService
 
             if (winningBid != null)
             {
-                // Close auction with a winner if the bid meets or exceeds the minimum price
+                
                 auctionForUpdate.IsClosed = true;
                 auctionForUpdate.CurrentBid = winningBid.BidAmount;
                 auctionForUpdate.UpdatedAt = DateTime.UtcNow;
@@ -112,7 +107,7 @@ public class AuctionManagementService : BackgroundService
             }
             else if (DateTime.UtcNow >= auctionForUpdate.StartTime.AddHours((auctionForUpdate.EndTime - auctionForUpdate.StartTime).TotalHours))
             {
-                // Close auction without a winner after the specified duration
+                
                 auctionForUpdate.IsClosed = true;
                 auctionForUpdate.CurrentBid = null;
                 auctionForUpdate.UpdatedAt = DateTime.UtcNow;
@@ -122,7 +117,7 @@ public class AuctionManagementService : BackgroundService
 
             dbContext.Auctions.Update(auctionForUpdate);
 
-            // Commit transaction
+    
             await dbContext.SaveChangesAsync(stoppingToken);
             await transaction.CommitAsync(stoppingToken);
         }

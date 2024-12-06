@@ -27,7 +27,7 @@ const NavigationMenu = () => {
 
         const user = await getUserByPhoneNumber(phoneNumber);
         setUserName(`${user.firstName} ${user.lastName}`);
-        setUserAvatar(null); // Update to user's avatar URL if available
+        setUserAvatar(null);
       } catch (error: any) {
         console.error("Failed to fetch user details:", error.message);
         setUserName("Guest");
