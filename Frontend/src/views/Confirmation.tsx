@@ -3,7 +3,7 @@ import { useLocation } from "react-router-dom";
 
 const ConfirmationPage: React.FC = () => {
   const location = useLocation();
-  const { imageUrl,itemtitle,deliveryDetails } = location.state || {};
+  const { imageUrl, itemTitle, deliveryDetails } = location.state || {};
 
   return (
     <div className="flex flex-col items-center justify-center p-8 min-h-screen bg-gray-50 font-sans">
@@ -26,8 +26,30 @@ const ConfirmationPage: React.FC = () => {
           Thank you for completing your journey with us!
         </p>
         <p className="text-lg text-gray-700 mb-4">
-          Your package {itemtitle} will be delivered to : {deliveryDetails}
+          Your package <strong>{itemTitle}</strong> will be delivered to:
         </p>
+        {deliveryDetails && (
+          <div className="text-left">
+            <p>
+              <strong>Name:</strong> {deliveryDetails.name}
+            </p>
+            <p>
+              <strong>Address:</strong> {deliveryDetails.address}
+            </p>
+            <p>
+              <strong>City:</strong> {deliveryDetails.city}
+            </p>
+            <p>
+              <strong>Postal Code:</strong> {deliveryDetails.postalCode}
+            </p>
+            <p>
+              <strong>Country:</strong> {deliveryDetails.country}
+            </p>
+            <p>
+              <strong>Phone Number:</strong> {deliveryDetails.phoneNumber}
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
