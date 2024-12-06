@@ -157,6 +157,7 @@ const handlePlaceBid = async () => {
             itemTitle: currentAuction.artwork.title,
             auctionEndDate: endDate.toLocaleDateString(),
             imageUrl: currentAuction.artwork.imageUrl,
+            highestBid: highestBid,
           },
         });
       } else {

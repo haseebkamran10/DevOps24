@@ -111,6 +111,50 @@ const HomePage = () => {
             Discover and bid on exquisite artworks.
           </p>
         </div>
+           {/* Ongoing Auctions */}
+           <div className="container mx-auto px-5 md:px-10 py-10 md:py-20">
+          <h2 className="text-2xl md:text-3xl font-bold mb-6">Ongoing Auctions</h2>
+          {loading ? (
+            <div className="flex justify-center">
+              <Spinner />
+            </div>
+          ) : ongoingAuctions.length === 0 ? (
+            <p className="text-center">No ongoing auctions at the moment.</p>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {ongoingAuctions.map((auction) => (
+                <div
+                  key={auction.auctionId}
+                  className="shadow-lg rounded-lg overflow-hidden w-full max-w-xs mx-auto"
+                >
+                  <img
+                    src={auction.artwork.imageUrl}
+                    alt={auction.artwork.title}
+                    className="h-60 w-full object-cover"
+                  />
+                  <div className="p-4 bg-gray-800">
+                    <h3 className="font-bold truncate">{auction.artwork.title}</h3>
+                    <p className="text-sm truncate">Artist: {auction.artwork.artist}</p>
+                    <p className="text-sm text-yellow-400">
+                      Current Bid: {auction.currentBid || auction.startingBid} USD
+                    </p>
+                    <p className="text-sm text-red-400">
+                      Ends At: {new Date(auction.endTime).toLocaleString()}
+                    </p>
+                    <Link
+                      to={`/SingleProductPage`}
+                      state={{ auction: auction }}
+                    >
+                      <button className="mt-2 bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded text-xs">
+                        Bid Now
+                      </button>
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
 
         {/* Featured Artworks */}
         <div className="container mx-auto px-5 md:px-10 py-10 md:py-20">
@@ -166,51 +210,6 @@ const HomePage = () => {
               </div>
             ))}
           </div>
-        </div>
-
-        {/* Ongoing Auctions */}
-        <div className="container mx-auto px-5 md:px-10 py-10 md:py-20">
-          <h2 className="text-2xl md:text-3xl font-bold mb-6">Ongoing Auctions</h2>
-          {loading ? (
-            <div className="flex justify-center">
-              <Spinner />
-            </div>
-          ) : ongoingAuctions.length === 0 ? (
-            <p className="text-center">No ongoing auctions at the moment.</p>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {ongoingAuctions.map((auction) => (
-                <div
-                  key={auction.auctionId}
-                  className="shadow-lg rounded-lg overflow-hidden w-full max-w-xs mx-auto"
-                >
-                  <img
-                    src={auction.artwork.imageUrl}
-                    alt={auction.artwork.title}
-                    className="h-60 w-full object-cover"
-                  />
-                  <div className="p-4 bg-gray-800">
-                    <h3 className="font-bold truncate">{auction.artwork.title}</h3>
-                    <p className="text-sm truncate">Artist: {auction.artwork.artist}</p>
-                    <p className="text-sm text-yellow-400">
-                      Current Bid: {auction.currentBid || auction.startingBid} USD
-                    </p>
-                    <p className="text-sm text-red-400">
-                      Ends At: {new Date(auction.endTime).toLocaleString()}
-                    </p>
-                    <Link
-                      to={`/SingleProductPage`}
-                      state={{ auction: auction }}
-                    >
-                      <button className="mt-2 bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded text-xs">
-                        Bid Now
-                      </button>
-                    </Link>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
         </div>
       </div>
       {toast && (

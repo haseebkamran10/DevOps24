@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useStripe, CardElement, Elements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate,useLocation } from 'react-router-dom';
 import Spinner from '@/components/ui/spinner';
 
 // Initialize Stripe
@@ -12,10 +12,10 @@ interface PaymentPageProps {
   itemTitle: string;
 }
 
-const PaymentPage: React.FC<PaymentPageProps> = ({ totalAmount, itemTitle }) => {
+const PaymentPage: React.FC<PaymentPageProps> = () => {
   const stripe = useStripe();
   const navigate = useNavigate();
-
+  const location = useLocation();
   const [paymentDetails] = useState({
     cardNumber: '',
     expiryDate: '',
@@ -35,6 +35,7 @@ const PaymentPage: React.FC<PaymentPageProps> = ({ totalAmount, itemTitle }) => 
   const [paymentStatus, setPaymentStatus] = useState<string | null>(null);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string | null>('stripe');
   const [loading, setLoading] = useState(false);
+  const { imageUrl,winnerName, itemTitle,highestBid } = location.state || {};
 
   const handleDeliveryInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -59,14 +60,30 @@ const PaymentPage: React.FC<PaymentPageProps> = ({ totalAmount, itemTitle }) => 
     try {
       if (!stripe) {
         setPaymentStatus('Stripe is not loaded. Please try again later.');
-        navigate('/confirmation');
+        navigate('/confirmation', {
+          state: {
+            imageUrl,
+            itemTitle,
+            winnerName,
+            highestBid,
+            deliveryDetails,
+          },
+        });
         return;
       }
   
       // Simulate successful payment
       setPaymentStatus('Payment successful!');
       await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate some delay
-      navigate('/confirmation');
+      navigate('/confirmation', {
+        state: {
+          imageUrl,
+          itemTitle,
+          winnerName,
+          highestBid,
+          deliveryDetails,
+        },
+      });
   
       /* Uncomment for actual Stripe API call
       const cardElement = elements?.getElement(CardElement);
@@ -235,7 +252,7 @@ const PaymentPage: React.FC<PaymentPageProps> = ({ totalAmount, itemTitle }) => 
           <h3 className="text-2xl font-semibold mb-6 text-gray-800">Your Cart</h3>
           <div className="mb-6">
             <p className="text-gray-600">Product: <span className="font-medium">{itemTitle}</span></p>
-            <p className="text-gray-600">Total: <span className="font-medium">${totalAmount.toFixed(2)}</span></p>
+            <p className="text-gray-600">Total: <span className="font-medium">${highestBid}</span></p>
           </div>
 
           <form className="mt-6" onSubmit={handlePayment}>

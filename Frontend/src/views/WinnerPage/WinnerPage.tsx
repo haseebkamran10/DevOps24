@@ -12,7 +12,13 @@ const WinnerPage: React.FC<WinnerPageProps> = () => {
   const location = useLocation();
   const { winnerName, itemTitle, auctionEndDate, imageUrl } = location.state || {};
   const handleNavigateToPayment = () => {
-    navigate("/paymentpage");
+    navigate('/paymentpage', {
+      state: {
+        winnerName: winnerName,
+        itemTitle: itemTitle,
+        imageUrl:imageUrl,
+      },
+    });
   };
   return (
     <div className="flex flex-col items-center justify-center p-8 min-h-screen bg-gray-50 font-sans">
