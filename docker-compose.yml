@@ -35,7 +35,7 @@ services:
       POSTGRES_PASSWORD: SS8CGDEssyk0AH8N
       POSTGRES_DB: postgres
     ports:
-      - "6543:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
