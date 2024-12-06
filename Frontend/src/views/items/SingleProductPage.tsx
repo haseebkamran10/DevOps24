@@ -192,7 +192,7 @@ const handlePlaceBid = async () => {
     await endAuction({ auctionId: auction.auctionId });
   } catch (error) {
     //console.error("Error placing bid:", error);
-    //setToast({ message: "Failed to place bid.", type: "error"}); 
+    setToast({ message: "Failed to place bid.", type: "error"}); 
   } finally {
     setLoading(false);
   }
