@@ -136,8 +136,8 @@ public async Task<IActionResult> GetAllArtworksAsync()
 
         return Ok(artworkDtos);
     }
-    catch (Exception ex)
-    {
+    catch (Exception)
+            {
   
         return StatusCode(500, "An unexpected error occurred while fetching artworks.");
     }

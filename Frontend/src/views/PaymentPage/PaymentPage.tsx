@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useStripe, useElements, CardElement, Elements } from '@stripe/react-stripe-js';
+import { useStripe, CardElement, Elements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
 import { useNavigate } from 'react-router-dom';
 import Spinner from '@/components/ui/spinner';
@@ -14,10 +14,9 @@ interface PaymentPageProps {
 
 const PaymentPage: React.FC<PaymentPageProps> = ({ totalAmount, itemTitle }) => {
   const stripe = useStripe();
-  const elements = useElements();
   const navigate = useNavigate();
 
-  const [paymentDetails, setPaymentDetails] = useState({
+  const [paymentDetails] = useState({
     cardNumber: '',
     expiryDate: '',
     cvv: '',

@@ -55,7 +55,9 @@ namespace Backend.Tests
             var response = okResult.Value as dynamic;
 
             Assert.NotNull(response);
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
             Assert.Equal("User added successfully.", response.message);
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
             Assert.True(response.userId > 0); 
         }
 
@@ -144,7 +146,9 @@ namespace Backend.Tests
             var response = okResult.Value as dynamic;
 
             Assert.NotNull(response);
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
             Assert.Equal(user.FirstName, response.FirstName);
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
             Assert.Equal(user.PhoneNumber, response.PhoneNumber);
         }
 
