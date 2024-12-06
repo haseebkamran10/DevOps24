@@ -3,7 +3,7 @@ import { useLocation } from "react-router-dom";
 
 const ConfirmationPage: React.FC = () => {
   const location = useLocation();
-  const { imageUrl,highestBid,itemtitle,deliveryDetails } = location.state || {};
+  const { imageUrl,itemtitle,deliveryDetails } = location.state || {};
 
   return (
     <div className="flex flex-col items-center justify-center p-8 min-h-screen bg-gray-50 font-sans">
