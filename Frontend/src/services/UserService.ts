@@ -53,6 +53,9 @@ export const getUser = async (userId: number): Promise<RegisterUserDto> => {
       },
     });
     console.log("User fetched successfully:", response.data);
+    // Save user details in localStorage
+    localStorage.setItem("userInfo", JSON.stringify(response.data));
+    
     return response.data;
   } catch (error: any) {
     if (error.response) {
@@ -83,6 +86,8 @@ export const getUserByPhoneNumber = async (
       }
     );
     console.log("User fetched successfully:", response.data);
+        // Save user details in localStorage
+    localStorage.setItem("userInfo", JSON.stringify(response.data));
     return response.data;
   } catch (error: any) {
     if (error.response) {

@@ -1,47 +1,19 @@
 import React, { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
-import { getUserByPhoneNumber } from "../services/UserService";
+
 const ConfirmationPage: React.FC = () => {
   const location = useLocation();
-  const { imageUrl, itemTitle, phoneNumber } = location.state || {}; 
-  const [deliveryDetails, setDeliveryDetails] = useState<any>(null); 
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { imageUrl, itemTitle } = location.state || {}; // Extract state passed during navigation
+  const [userDetails, setUserDetails] = useState<any>(null);
 
   useEffect(() => {
-    const fetchUserDetails = async () => {
-      try {
-        if (phoneNumber) {
-          const userDetails = await getUserByPhoneNumber(phoneNumber);
-          setDeliveryDetails(userDetails);
-        } else {
-          throw new Error("Phone number is missing.");
-        }
-      } catch (err: any) {
-        setError(err.message || "Failed to fetch user details.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchUserDetails();
-  }, [phoneNumber]);
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
-        <p>Loading delivery details...</p>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
-        <p>Error: {error}</p>
-      </div>
-    );
-  }
+    const storedUserDetails = localStorage.getItem("userInfo");
+    if (storedUserDetails) {
+      setUserDetails(JSON.parse(storedUserDetails));
+    } else {
+      console.warn("User details are not available in localStorage.");
+    }
+  }, []);
 
   return (
     <div className="flex flex-col items-center justify-center p-8 min-h-screen bg-gray-50 font-sans">
@@ -56,7 +28,7 @@ const ConfirmationPage: React.FC = () => {
         alt="Celebration"
         className="mb-6 w-full max-w-md rounded-3xl shadow-lg"
         onError={(e) => {
-          e.currentTarget.src = "/placeholder.jpg";
+          e.currentTarget.src = "/placeholder.jpg"; // Fallback image
         }}
       />
       <div className="bg-white p-8 rounded-3xl shadow-md w-full max-w-lg text-center">
@@ -66,28 +38,29 @@ const ConfirmationPage: React.FC = () => {
         <p className="text-lg text-gray-700 mb-4">
           Your package <strong>{itemTitle}</strong> will be delivered to:
         </p>
-        {deliveryDetails && (
+        {userDetails ? (
           <div className="text-left">
             <p>
-              <strong>Name:</strong> {deliveryDetails.firstName}{" "}
-              {deliveryDetails.lastName}
+              <strong>Name:</strong> {userDetails.firstName} {userDetails.lastName}
             </p>
             <p>
-              <strong>Address:</strong> {deliveryDetails.addressLine}
+              <strong>Address:</strong> {userDetails.addressLine}
             </p>
             <p>
-              <strong>City:</strong> {deliveryDetails.city}
+              <strong>City:</strong> {userDetails.city}
             </p>
             <p>
-              <strong>Postal Code:</strong> {deliveryDetails.zip}
+              <strong>Postal Code:</strong> {userDetails.zip}
             </p>
             <p>
-              <strong>Country:</strong> {deliveryDetails.country}
+              <strong>Country:</strong> {userDetails.country}
             </p>
             <p>
-              <strong>Phone Number:</strong> {deliveryDetails.phoneNumber}
+              <strong>Phone Number:</strong> {userDetails.phoneNumber}
             </p>
           </div>
+        ) : (
+          <p className="text-red-600">User details not found. Please log in again.</p>
         )}
       </div>
     </div>
