@@ -10,11 +10,7 @@ interface WinnerPageProps {
 const WinnerPage: React.FC<WinnerPageProps> = () => {
   const navigate = useNavigate();
   const location = useLocation();
-
-  // Get the passed state data from the navigation
   const { winnerName, itemTitle, auctionEndDate, imageUrl } = location.state || {};
-
-  // Navigate to the payment page
   const handleNavigateToPayment = () => {
     navigate("/paymentpage");
   };

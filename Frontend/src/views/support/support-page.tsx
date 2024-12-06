@@ -11,7 +11,7 @@ import { SubmitTicketComponent } from "./submit-ticket";
 
 export default function SupportPage() {
   const imageRef = useRef<HTMLImageElement>(null);
-  const [opacity, setOpacity] = useState(0.6); // To control the opacity of the background image
+  const [opacity, setOpacity] = useState(0.6);
 
   useScrollEffect(imageRef, setOpacity);
 
@@ -22,7 +22,7 @@ export default function SupportPage() {
         src="support_banner.jpg"
         alt="Background"
         className="fixed inset-0 w-full h-dvh object-cover transition-transform duration-300"
-        style={{ opacity }} // Bind the opacity state to the image
+        style={{ opacity }}
       />
       <div className="relative z-10 flex flex-col items-center justify-center min-h-screen text-foreground">
         <div className=" py-20">

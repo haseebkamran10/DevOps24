@@ -1,4 +1,4 @@
-using System;
+
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -18,20 +18,20 @@ namespace Backend.Models
         public decimal StartingBid { get; set; }
 
         [Column(TypeName = "decimal(18, 2)")]
-        public decimal? CurrentBid { get; set; } // Updated when bids are placed
+        public decimal? CurrentBid { get; set; } 
 
         [Column(TypeName = "decimal(18, 2)")]
-        public decimal MinimumPrice { get; set; } // Secret threshold
+        public decimal MinimumPrice { get; set; }
 
         public DateTime StartTime { get; set; }
         public DateTime EndTime { get; set; }
 
-        public bool IsClosed { get; set; } // Single definition only
+        public bool IsClosed { get; set; } 
 
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
 
-        // Add this navigation property
+
         public ICollection<Bid> Bids { get; set; } = new List<Bid>();
     }
 }

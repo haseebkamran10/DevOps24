@@ -10,7 +10,7 @@ export const Layout = () => {
         <PersistentProvider>
         <NavigationMenu />
         <main>
-          <Outlet /> {/* Renders the child route's component */}
+          <Outlet />
         </main>
         <Footer />
       </PersistentProvider>

@@ -9,9 +9,7 @@ namespace Backend.Models
         public string ImageUrl { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
-        public int? UserId { get; set; } // Nullable to allow artworks without a user
-
-        // Add this navigation property
+        public int? UserId { get; set; }
         public User User { get; set; }
     }
 }

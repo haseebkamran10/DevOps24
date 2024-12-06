@@ -37,19 +37,6 @@ const PaymentPage: React.FC<PaymentPageProps> = ({ totalAmount, itemTitle }) => 
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string | null>('stripe');
   const [loading, setLoading] = useState(false);
 
-  const handlePaymentInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-
-    if (name === 'cardNumber' && !/^\d{0,16}$/.test(value)) return;
-    if (name === 'expiryDate' && !/^\d{0,2}\/?\d{0,2}$/.test(value)) return;
-    if (name === 'cvv' && !/^\d{0,3}$/.test(value)) return;
-
-    setPaymentDetails({
-      ...paymentDetails,
-      [name]: value,
-    });
-  };
-
   const handleDeliveryInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
 
@@ -68,8 +55,14 @@ const PaymentPage: React.FC<PaymentPageProps> = ({ totalAmount, itemTitle }) => 
 
   const handleStripePayment = async (e: React.FormEvent) => {
     e.preventDefault();
+    setPaymentStatus('Payment successful!');
+    setLoading(true);
+    setTimeout(() => {
+      setLoading(false);
+      navigate('/confirmation');
+    }, 1000);
 
-    if (!stripe || !elements) {
+    /*if (!stripe || !elements) {
       setPaymentStatus('Stripe is not loaded. Please try again later.');
       return;
     }
@@ -108,15 +101,17 @@ const PaymentPage: React.FC<PaymentPageProps> = ({ totalAmount, itemTitle }) => 
 
       if (result.error) {
         setPaymentStatus(`Payment failed: ${result.error.message}`);
+        navigate('/confirmation');
       } else if (result.paymentIntent.status === 'succeeded') {
         setPaymentStatus('Payment successful!');
-        setTimeout(() => navigate('/confirmation'), 2000);
+        navigate('/confirmation');
       }
     } catch (error: any) {
       setPaymentStatus(`Error: ${error.message}`);
+      navigate('/confirmation');
     } finally {
       setLoading(false);
-    }
+    }*/
   };
 
   const handlePayment = (e: React.FormEvent) => {

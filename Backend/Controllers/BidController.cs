@@ -20,7 +20,7 @@ namespace Backend.Controllers
             _context = context;
         }
 
-        // Endpoint to place a bid
+      
         [HttpPost("place")]
         public async Task<IActionResult> PlaceBidAsync([FromBody] BidDto bidDto)
         {
@@ -33,14 +33,14 @@ namespace Backend.Controllers
 
             try
             {
-                // Validate user by phone number
+               
                 var user = await _context.Users.SingleOrDefaultAsync(u => u.PhoneNumber == bidDto.PhoneNumber);
                 if (user == null)
                 {
                     return NotFound("User not found.");
                 }
 
-                // Check if user has an active session
+       
                 var activeSession = await _context.Sessions
                     .FirstOrDefaultAsync(s => s.UserId == user.UserId && s.ExpiresAt > DateTime.UtcNow);
                 if (activeSession == null)
@@ -48,30 +48,30 @@ namespace Backend.Controllers
                     return Unauthorized("No active session found. Please start a session first.");
                 }
 
-                // Validate auction
+            
                 var auction = await _context.Auctions.FirstOrDefaultAsync(a => a.AuctionId == bidDto.AuctionId && !a.IsClosed);
                 if (auction == null)
                 {
                     return NotFound("Auction not found or is already closed.");
                 }
 
-                // Validate bid amount
+         
                 if (bidDto.BidAmount <= auction.CurrentBid)
                 {
                     return BadRequest("Bid amount must be higher than the current bid.");
                 }
 
-                // Update auction's current bid
+               
                 auction.CurrentBid = bidDto.BidAmount;
                 auction.UpdatedAt = DateTime.UtcNow;
 
-                // Record the bid
+          
                 var bid = new Bid
                 {
                     AuctionId = bidDto.AuctionId,
                     UserId = user.UserId,
                     BidAmount = bidDto.BidAmount,
-                    BidTime = DateTime.UtcNow, // Set UTC time
+                    BidTime = DateTime.UtcNow, 
                     SessionId = activeSession.SessionId
                 };
 
@@ -88,7 +88,7 @@ namespace Backend.Controllers
             }
         }
 
-        // Endpoint to get bids for an auction
+        
         [HttpGet("auction/{auctionId}")]
         public async Task<IActionResult> GetBidsForAuctionAsync(int auctionId)
         {

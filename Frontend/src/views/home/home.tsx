@@ -10,9 +10,9 @@ import { getAllArtworks } from "@/services";
 const HomePage = () => {
   const bannerRef = useRef<HTMLImageElement>(null);
   const [opacity, setOpacity] = useState(0.7);
-  const { getState, setState } = usePersistent(); // Persistent state
+  const { getState, setState } = usePersistent();
   const [ongoingAuctions, setOngoingAuctions] = useState<ActiveAuction[]>(
-    () => getState("ongoingAuctions") || [] // Load from localStorage if available
+    () => getState("ongoingAuctions") || [] 
   );
   const [loading, setLoading] = useState(ongoingAuctions.length === 0);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);

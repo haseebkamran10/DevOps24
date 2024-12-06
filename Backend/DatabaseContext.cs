@@ -11,14 +11,14 @@ namespace Backend.Data
         public DbSet<Auction> Auctions { get; set; }
         public DbSet<Bid> Bids { get; set; }
         public DbSet<Artwork> Artworks { get; set; }
-        public DbSet<Session> Sessions { get; set; } // Declare the DbSet for Sessions
+        public DbSet<Session> Sessions { get; set; } 
         public DbSet<Payment> payments { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
-            // User entity configuration
+        
             modelBuilder.Entity<User>(entity =>
             {
                 entity.ToTable("users");
@@ -51,7 +51,7 @@ namespace Backend.Data
         entity.Property(e => e.Status).HasColumnName("status");
     });
 
-            // Bid entity configuration
+            
   modelBuilder.Entity<Bid>(entity =>
 {
     entity.ToTable("bids");
@@ -62,7 +62,7 @@ namespace Backend.Data
     entity.Property(e => e.BidAmount)
           .HasColumnName("bid_amount")
           .HasColumnType("decimal(18, 2)");
-    entity.Property(e => e.BidTime).HasColumnName("bid_time"); // Consistent with other entities
+    entity.Property(e => e.BidTime).HasColumnName("bid_time"); 
     entity.Property(e => e.SessionId).HasColumnName("session_id").IsRequired(false);
 
     entity.HasOne(e => e.Session)
@@ -70,7 +70,7 @@ namespace Backend.Data
           .HasForeignKey(e => e.SessionId);
 });
 
-            // Auction entity configuration
+          
            modelBuilder.Entity<Auction>(entity =>
             {
                 entity.ToTable("auctions");
@@ -87,13 +87,13 @@ namespace Backend.Data
                 entity.Property(a => a.CreatedAt).HasColumnName("created_at");
                 entity.Property(a => a.UpdatedAt).HasColumnName("updated_at");
 
-                // Configure relationship with Bid
+            
                 entity.HasMany(a => a.Bids)
                       .WithOne(b => b.Auction)
                       .HasForeignKey(b => b.AuctionId);
             });
 
-            // Artwork entity configuration
+         
             modelBuilder.Entity<Artwork>(entity =>
             {
                 entity.ToTable("artworks");
@@ -110,7 +110,7 @@ namespace Backend.Data
                 entity.HasOne(e => e.User).WithMany(u => u.Artworks).HasForeignKey(e => e.UserId);
             });
 
-            // Session entity configuration
+         
             modelBuilder.Entity<Session>(entity =>
             {
                 entity.ToTable("sessions");

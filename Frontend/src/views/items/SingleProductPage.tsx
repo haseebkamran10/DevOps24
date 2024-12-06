@@ -59,19 +59,19 @@ function SingleProductPage() {
       const endDate = new Date(auction.endTime);
   
       if (now >= endDate) {
-        // Fetch bids for the auction
+ 
         const allBids = await getBidsForAuction(auction.auctionId);
   
         if (allBids.length > 0) {
-          // Find the highest bid
+
           const highestBid = allBids.reduce((maxBid, currentBid) =>
             currentBid.bidAmount > maxBid.bidAmount ? currentBid : maxBid
           );
   
-          // Fetch the winner's user information
+
           const winner = await getUser(highestBid.userId);
   
-          // Navigate to the winner's page
+    
           navigate("/winners", {
             state: {
               winnerName: winner.username || `${winner.firstName} ${winner.lastName}`,
@@ -86,13 +86,12 @@ function SingleProductPage() {
       }
     };
   
-    const interval = setInterval(checkAuctionEnd, 1000); // Check every second
+    const interval = setInterval(checkAuctionEnd, 1000);
   
     return () => clearInterval(interval);
   }, [auction?.auctionId, auction?.endTime, navigate]);
   
 
-  // Fetch bids for the auction
   useEffect(() => {
     if (auction?.auctionId) {
       fetchBids();
@@ -100,16 +99,16 @@ function SingleProductPage() {
   }, [auction?.auctionId]);
 
   const fetchBids = async () => {
-    setLoading(true); // Show spinner
+    setLoading(true); 
     try {
       const fetchedBids = await getBidsForAuction(auction.auctionId);
       setBids(fetchedBids);
-      setToast({ message: "Bids fetched successfully.", type: "success" }); // Success Toast
+      setToast({ message: "Bids fetched successfully.", type: "success" }); 
     } catch (error) {
       console.error("Error fetching bids:", error);
-      setToast({ message: "Failed to fetch bids.", type: "error" }); // Error Toast
+      setToast({ message: "Failed to fetch bids.", type: "error" }); 
     } finally {
-      setLoading(false); // Hide spinner
+      setLoading(false);
     }
   };
 
@@ -129,9 +128,9 @@ const handlePlaceBid = async () => {
     return;
   }
 
-  setLoading(true); // Show spinner
+  setLoading(true);
   try {
-    // Fetch the auction details using `getActiveAuctions`
+
     const activeAuctions = await getActiveAuctions();
     const currentAuction = activeAuctions.find(a => a.auctionId === auction.auctionId);
 
@@ -144,7 +143,6 @@ const handlePlaceBid = async () => {
     const endDate = new Date(currentAuction.endTime);
 
     if (now >= endDate) {
-      // Auction has ended, determine the winner
       const allBids = await getBidsForAuction(auction.auctionId);
 
       if (allBids.length > 0) {
@@ -153,8 +151,6 @@ const handlePlaceBid = async () => {
         );
 
         const winner = await getUser(highestBid.userId);
-
-        // Navigate to the winner's page
         navigate("/winners", {
           state: {
             winnerName: winner.username || `${winner.firstName} ${winner.lastName}`,
@@ -168,8 +164,6 @@ const handlePlaceBid = async () => {
       }
       return;
     }
-
-    // Proceed with placing the bid if the auction is still active
     const bidData = {
       phoneNumber,
       auctionId: auction.auctionId,
@@ -177,15 +171,12 @@ const handlePlaceBid = async () => {
     };
 
     const response = await placeBid(bidData);
-    setToast({ message: response.message, type: "success" }); // Success Toast
-    fetchBids(); // Refresh bids after placing a bid
-
-    // Check and handle the secret threshold
+    setToast({ message: response.message, type: "success" }); 
+    fetchBids(); 
     const storedSecretThreshold = localStorage.getItem("secretThreshold");
     if (storedSecretThreshold) {
       const threshold = parseFloat(storedSecretThreshold);
       if (threshold && Number(bidAmount) >= threshold) {
-        // End the auction and navigate to winners page
         await endAuction({ auctionId: auction.auctionId });
         navigate("/winners", {
           state: {
@@ -201,16 +192,11 @@ const handlePlaceBid = async () => {
     await endAuction({ auctionId: auction.auctionId });
   } catch (error) {
     console.error("Error placing bid:", error);
-    setToast({ message: "Failed to place bid.", type: "error" }); // Error Toast
+    setToast({ message: "Failed to place bid.", type: "error"}); 
   } finally {
-    setLoading(false); // Hide spinner
+    setLoading(false);
   }
 };
-
-  
-
-
-  // Calculate time remaining
   useEffect(() => {
     if (!auction?.endTime) return;
 

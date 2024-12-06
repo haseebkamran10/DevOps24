@@ -1,18 +1,16 @@
 import axios from "axios";
-
-// Define the base URL for the API
 const BASE_URL = "http://51.120.6.249:5001/api/Artwork";
 
-// DTO for creating an artwork
+
 interface CreateArtworkDto {
   phoneNumber: string;
   title: string;
   description: string;
   artist: string;
-  imageFile: File; // File upload for the artwork image
+  imageFile: File; 
 }
 
-// Model for artwork data
+
 interface Artwork {
   artworkId: number;
   title: string;

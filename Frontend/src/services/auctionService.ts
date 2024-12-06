@@ -1,23 +1,22 @@
 import axios from "axios";
 
-// Define the base URL for the API
+
 const BASE_URL = "http://51.120.6.249:5001/api/Auction";
 
-// DTO for starting an auction
+
 interface AuctionDto {
-  phoneNumber: string; // To validate user and session
-  artworkId: number;   // Artwork to be auctioned
-  startingBid: number; // Starting bid for the auction
-  secretThreshold: number; // Minimum acceptable price
-  durationHours: number; // Auction duration in hours
+  phoneNumber: string; 
+  artworkId: number; 
+  startingBid: number; 
+  secretThreshold: number; 
+  durationHours: number; 
 }
 
-// DTO for ending an auction
+
 interface EndAuctionDto {
-  auctionId: number; // The ID of the auction to close
+  auctionId: number; 
 }
 
-// Model for active auctions
 export interface ActiveAuction {
   auctionId: number;
   artworkId: number;
@@ -34,12 +33,12 @@ export interface ActiveAuction {
     title: string;
     description: string;
     imageUrl: string;
-    artist: string; // Add this field if available in your API response
+    artist: string; 
     userId: number;
   };
 }
 
-// Response structure for starting an auction
+
 interface StartAuctionResponse {
   auctionId: number;
   message: string;

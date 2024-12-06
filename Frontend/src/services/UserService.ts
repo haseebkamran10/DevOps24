@@ -1,6 +1,5 @@
 import axios from "axios";
 
-// Define the user DTO interface
 interface RegisterUserDto {
   firstName: string;
   lastName: string;
@@ -12,8 +11,6 @@ interface RegisterUserDto {
   zip?: string;
   country: string;
 }
-
-// Base URL for the API
 const BASE_URL = "http://51.120.6.249:5001/api/User";
 
 /**

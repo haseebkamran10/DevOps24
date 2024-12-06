@@ -28,7 +28,7 @@ const AccordionTrigger = React.forwardRef<
       className={cn(
         "flex flex-1 items-center justify-between py-4 text-sm font-medium transition-all hover:underline [&[data-state=open]>svg]:rotate-180",
         className,
-        "w-full max-w-full" // Ensure the trigger does not expand beyond the container width
+        "w-full max-w-full"
       )}
       {...props}
     >
@@ -48,7 +48,7 @@ const AccordionContent = React.forwardRef<
     className={cn(
       "overflow-hidden text-sm data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down",
       className,
-      "w-full max-w-full" // Ensure the content does not expand beyond the container width
+      "w-full max-w-full" 
     )}
     {...props}
   >

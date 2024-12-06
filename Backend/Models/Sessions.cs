@@ -10,10 +10,7 @@ namespace Backend.Models
         public DateTime? ExpiresAt { get; set; }
         public int? UserId { get; set; }
         
-        // Navigation property to User
         public User User { get; set; }
-        
-        // Navigation property to Bid
         public List<Bid> Bids { get; set; }
     }
 }

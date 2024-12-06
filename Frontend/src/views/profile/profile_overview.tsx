@@ -20,8 +20,8 @@ import art1 from "@/assets/art_placeholder1.webp";
 import art2 from "@/assets/art_placeholder2.jpg";
 import art3 from "@/assets/art_placeholder3.png";
 import { getUserByPhoneNumber } from "../../services/UserService";
-import Spinner from "../../components/ui/spinner"; // Adjust the path as needed
-import Toast from  "../../components/ui/toast"; // Adjust the path as needed
+import Spinner from "../../components/ui/spinner";
+import Toast from  "../../components/ui/toast";
 
 const ProfileOverview = () => {
   const [userDetails, setUserDetails] = useState(() => {
@@ -97,7 +97,7 @@ const ProfileOverview = () => {
           <Button className="m-2" type="button">
             My Items
           </Button>
-          <Link to="/artwork">
+          <Link to="">
             <Button className="m-2" type="button">
               Add Artwork
             </Button>

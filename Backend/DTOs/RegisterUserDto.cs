@@ -17,7 +17,7 @@ namespace Backend.DTOs
         [Required]
         public string PhoneNumber { get; set; }
 
-        public string Username { get; set; } // Optionally required based on your application logic
+        public string Username { get; set; }
 
         public string AddressLine { get; set; }
 

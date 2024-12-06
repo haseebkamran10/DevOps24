@@ -11,7 +11,7 @@ namespace Backend.DTOs
         public string? City { get; set; }
         public string? Zip { get; set; }
         public string? Country { get; set; }
-        public DateTime CreatedAt { get; set; } = DateTime.MinValue; // Default value
-        public DateTime UpdatedAt { get; set; } = DateTime.MinValue; // Default value
+        public DateTime CreatedAt { get; set; } = DateTime.MinValue; 
+        public DateTime UpdatedAt { get; set; } = DateTime.MinValue;
     }
 }

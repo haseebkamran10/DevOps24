@@ -18,7 +18,7 @@ namespace Backend.Controllers
             _context = context;
         }
 
-        // Create a new artwork with file upload
+    
         [HttpPost("create")]
         public async Task<IActionResult> CreateArtworkAsync([FromForm] CreateArtworkDto artworkDto)
         {
@@ -36,14 +36,14 @@ namespace Backend.Controllers
 
             try
             {
-                // Validate user by phone number
+              
                 var user = await _context.Users.SingleOrDefaultAsync(u => u.PhoneNumber == artworkDto.PhoneNumber);
                 if (user == null)
                 {
                     return NotFound("User not found.");
                 }
 
-                // Check if user has an active session
+           
                 var activeSession = await _context.Sessions
                     .FirstOrDefaultAsync(s => s.UserId == user.UserId && s.ExpiresAt > DateTime.UtcNow);
                 if (activeSession == null)
@@ -51,11 +51,11 @@ namespace Backend.Controllers
                     return Unauthorized("No active session found. Please start a session first.");
                 }
 
-                // Upload the file to the Azure VM
+            
                 string imageUrl;
                 using (var httpClient = new HttpClient())
                 {
-                    // Generate a unique filename
+                    
                     var fileName = $"{Guid.NewGuid()}{Path.GetExtension(artworkDto.ImageFile.FileName)}";
                     var uploadUrl = $"http://51.120.6.249:9000/upload/{fileName}";
 
@@ -72,17 +72,17 @@ namespace Backend.Controllers
                         }
                     }
 
-                    // Construct the image URL
+                   
 imageUrl = $"http://51.120.6.249:9000/upload/{fileName}";
                 }
 
-                // Create the artwork
+                
                 var artwork = new Artwork
                 {
                     Title = artworkDto.Title,
                     Description = artworkDto.Description,
                     Artist = artworkDto.Artist,
-                    ImageUrl = imageUrl, // Use the generated image URL
+                    ImageUrl = imageUrl, 
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow,
                     UserId = user.UserId
@@ -101,7 +101,7 @@ imageUrl = $"http://51.120.6.249:9000/upload/{fileName}";
             }
         }
     
-      // Endpoint to fetch all artworks
+     
        [HttpGet]
 public async Task<IActionResult> GetAllArtworksAsync()
 {
@@ -113,16 +113,16 @@ public async Task<IActionResult> GetAllArtworksAsync()
         }
 
         var artworks = await _context.Artworks
-            .Include(a => a.User) // Include user details if necessary
+            .Include(a => a.User) 
             .ToListAsync();
 
-        // Return an empty list instead of 404 if no artworks are found
+
         if (!artworks.Any())
         {
             return Ok(new List<object>());
         }
 
-        // Map artworks to DTOs for frontend compatibility
+
         var artworkDtos = artworks.Select(a => new 
         {
             a.ArtworkId,
@@ -138,7 +138,7 @@ public async Task<IActionResult> GetAllArtworksAsync()
     }
     catch (Exception ex)
     {
-        // Return a generic error message for better security
+  
         return StatusCode(500, "An unexpected error occurred while fetching artworks.");
     }
 }
@@ -149,7 +149,7 @@ public async Task<IActionResult> GetAllArtworksAsync()
             try
             {
                 var artwork = await _context.Artworks
-                    .Include(a => a.User) // Optional: Include user details if needed
+                    .Include(a => a.User) 
                     .FirstOrDefaultAsync(a => a.ArtworkId == id);
 
                 if (artwork == null)

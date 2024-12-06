@@ -11,7 +11,6 @@ const navItems = [
       { name: "Contact Us", href: "/support#contact" },
     ],
   },
-  /*{ name: "Winners", href: "/winners" },*/
 ];
 
 export default navItems;

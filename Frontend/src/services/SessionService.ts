@@ -1,11 +1,9 @@
 import axios from "axios";
 
-// Define DTO for starting a session
 interface StartSessionDto {
   phoneNumber: string;
 }
 
-// Define the base URL for the API
 const BASE_URL = "http://51.120.6.249:5001/api/Session";
 
 /**
@@ -49,7 +47,7 @@ export const endSession = async (sessionId: string): Promise<string> => {
       params: { sessionId },
     });
     console.log("Session ended successfully:", response.data);
-    return response.data.message; // Explicitly return the message
+    return response.data.message;
   } catch (error: any) {
     if (error.response) {
       console.error("Error ending session:", error.response.data);

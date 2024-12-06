@@ -1,45 +1,39 @@
 import { useState } from "react";
-import DatePicker from "react-datepicker"; // Using a date picker for better UX
-import "react-datepicker/dist/react-datepicker.css"; // Include CSS for DatePicker
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css"; 
 import { createArtwork } from "@/services/ArtworkService";
 import { startAuction } from "@/services/auctionService";
 import {useNavigate } from "react-router-dom";
-import Spinner from "../components/ui/spinner"; // Adjust the path as needed
-import Toast from  "../components/ui/toast"; // Adjust the path as needed
+import Spinner from "../components/ui/spinner"; 
+import Toast from  "../components/ui/toast"; 
 
 function NewAuctionPage() {
-  const [step, setStep] = useState(1); // Track current step (1: Artwork, 2: Auction)
-  const [artworkId, setArtworkId] = useState<number | null>(null); // Store artwork ID
-  const [loading, setLoading] = useState(false); // Loading state
+  const [step, setStep] = useState(1);
+  const [artworkId, setArtworkId] = useState<number | null>(null); 
+  const [loading, setLoading] = useState(false); 
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
-  // Artwork form state
+
   const [phoneNumber, setPhoneNumber] = useState("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [artist, setArtist] = useState("");
   const [image, setImage] = useState<File | null>(null);
 
-  // Auction form state
+
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [startingBid, setStartingBid] = useState("");
   const [secretThreshold, setSecretThreshold] = useState("");
   const navigate = useNavigate();
-
-   // Show toast utility
    const showToast = (message: string, type: "success" | "error") => {
-    setToast(null); // Clear any existing toast
-    setTimeout(() => setToast({ message, type }), 50); // Slight delay to ensure re-render
+    setToast(null);
+    setTimeout(() => setToast({ message, type }), 50);
   };
-
-    // Handle image upload
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
       if (file) setImage(file);
     };
-  
-    // Handle Artwork Submission
     const handleArtworkSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
   
@@ -57,8 +51,8 @@ function NewAuctionPage() {
           artist,
           imageFile: image,
         });
-        setArtworkId(response.artworkId); // Store artwork ID
-        setStep(2); // Move to the next step
+        setArtworkId(response.artworkId);
+        setStep(2);
         showToast("Artwork created successfully!", "success");
       } catch (error) {
         console.error("Error creating artwork:", error);
@@ -67,8 +61,6 @@ function NewAuctionPage() {
         setLoading(false);
       }
     };
-  
-    // Handle Auction Submission
     const handleAuctionSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
     
@@ -81,14 +73,10 @@ function NewAuctionPage() {
         showToast("Please fill out all fields.", "error");
         return;
       }
-    
-      // Ensure that end date is after the start date
       if (endDate <= startDate) {
         showToast("End date must be after the start date.", "error");
         return;
       }
-    
-      // Calculate auction duration in hours
       const durationHours = Math.floor(
         (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60)
       );
@@ -97,26 +85,22 @@ function NewAuctionPage() {
         showToast("End date must be after the start date.", "error");
         return;
       }
-    
-      // Send auction data to the backend
       const auctionDto = {
         phoneNumber,
         artworkId,
         startingBid: parseFloat(startingBid),
         secretThreshold: parseFloat(secretThreshold),
-        durationHours, // Send duration in hours
+        durationHours,
       };
     
       setLoading(true);
       try {
         const response = await startAuction(auctionDto);
-    
-        // Store the secretThreshold and auctionId in localStorage
         localStorage.setItem("auctionId", response.auctionId.toString());
         localStorage.setItem("secretThreshold", secretThreshold);
     
         showToast("Auction started successfully!", "success");
-        setTimeout(() => navigate("/"), 2000); // Delay navigation to show success toast
+        setTimeout(() => navigate("/"), 2000);
       } catch (error) {
         console.error("Error starting auction:", error);
         showToast("Failed to start auction. Please try again.", "error");

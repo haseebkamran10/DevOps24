@@ -1,7 +1,7 @@
-namespace Backend.DTOs // Replace with the correct namespace
+namespace Backend.DTOs
 {
     public class PaymentIntentRequest
     {
-        public long Amount { get; set; } // This corresponds to the "amount" in your JSON request
+        public long Amount { get; set; } 
     }
 }

@@ -18,9 +18,9 @@ public class Customer
     [MaxLength(50)]
     public required string FirstName { get; set; }
 
-    [Required] // Ensures non-null value in the database
+    [Required] 
     [MaxLength(50)]
-    public required string LastName { get; set; } // Ensures value is set during object initialization
+    public required string LastName { get; set; } 
 
     [Required]
     [EmailAddress]

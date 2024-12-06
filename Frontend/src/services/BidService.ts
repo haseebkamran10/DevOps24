@@ -1,16 +1,14 @@
 import axios from "axios";
-
-// Define the base URL for the API
 const BASE_URL = "http://51.120.6.249:5001/api/Bid";
 
-// DTO for placing a bid
+
 interface BidDto {
   phoneNumber: string;
   auctionId: number;
   bidAmount: number;
 }
 
-// Model for a bid response
+
 interface Bid {
   bidId: number;
   auctionId: number;
@@ -20,7 +18,7 @@ interface Bid {
   sessionId?: string | null;
 }
 
-// Response structure for placing a bid
+
 interface PlaceBidResponse {
   message: string;
   bidId: number;

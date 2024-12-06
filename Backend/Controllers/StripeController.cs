@@ -1,11 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Stripe;
-using Backend.DTOs; // Adjust namespace to match your project
-using System.IO;
-using System.Threading.Tasks;
+using Backend.DTOs;
 
-namespace Backend.Controllers // Adjust namespace to match your project
+
+namespace Backend.Controllers
 {
     [ApiController]
     [Route("api/payments")]
@@ -16,8 +15,6 @@ namespace Backend.Controllers // Adjust namespace to match your project
         public PaymentController(IOptions<StripeSettings> stripeSettings)
         {
             _stripeSettings = stripeSettings.Value;
-
-            // Set the Stripe API Key globally
             StripeConfiguration.ApiKey = _stripeSettings.SecretKey;
         }
 
@@ -33,7 +30,7 @@ namespace Backend.Controllers // Adjust namespace to match your project
 
             try
             {
-                var amountInCents = request.Amount * 100; // Convert dollars to cents
+                var amountInCents = request.Amount * 100; 
                 Console.WriteLine($"Amount: {amountInCents}");
 
                 var options = new PaymentIntentCreateOptions
@@ -92,7 +89,7 @@ public class StripeWebhookController : ControllerBase
             return BadRequest(new { error = $"Webhook Error: {ex.Message}" });
         }
 
-        // Handle the event
+
         switch (stripeEvent.Type)
         {
             case "payment_intent.succeeded":
@@ -100,7 +97,7 @@ public class StripeWebhookController : ControllerBase
                 if (paymentIntent != null)
                 {
                     Console.WriteLine($"PaymentIntent succeeded: {paymentIntent.Id}");
-                    // Add your business logic here, e.g., update order status
+
                 }
                 break;
 
@@ -109,7 +106,7 @@ public class StripeWebhookController : ControllerBase
                 if (failedPaymentIntent != null)
                 {
                     Console.WriteLine($"PaymentIntent failed: {failedPaymentIntent.Id}");
-                    // Handle failure
+
                 }
                 break;
 
@@ -118,7 +115,7 @@ public class StripeWebhookController : ControllerBase
                 if (requiresActionIntent != null)
                 {
                     Console.WriteLine($"Payment requires action: {requiresActionIntent.Id}");
-                    // Handle 3D Secure or other actions required
+                 
                 }
                 break;
 
