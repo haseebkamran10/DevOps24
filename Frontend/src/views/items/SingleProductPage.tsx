@@ -4,7 +4,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { useLocation, useNavigate } from "react-router-dom"; // Import useLocation and useNavigate
+import { useLocation, useNavigate } from "react-router-dom";
 import {useEffect, useState } from "react";
 import { GoShare } from "react-icons/go";
 import { IoMdClose } from "react-icons/io";
@@ -16,21 +16,21 @@ import {
 import { VscVerified } from "react-icons/vsc";
 import { placeBid, getBidsForAuction } from "../../services/BidService";
 import  {endAuction, getActiveAuctions} from "../../services/auctionService";
-import Spinner from "../../components/ui/spinner"; // Adjust the path as needed
-import Toast from  "../../components/ui/toast"; // Adjust the path as needed
+import Spinner from "../../components/ui/spinner";
+import Toast from  "../../components/ui/toast"; 
 import { getUser } from "@/services";
 
 function SingleProductPage() {
   const { state } = useLocation();
   const navigate = useNavigate();
-  const auction = state?.auction; // Get the auction data passed from HomePage
+  const auction = state?.auction; 
   const [isOverlayOpen, setIsOverlayOpen] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
-  const [timeRemaining, setTimeRemaining] = useState(""); // Time remaining until auction ends
+  const [timeRemaining, setTimeRemaining] = useState("");
   const [bids, setBids] = useState(auction?.bids || []);
   const [bidAmount, setBidAmount] = useState("");
   const [isBidding, setIsBidding] = useState(false);
-  const [loading, setLoading] = useState(false); // For Spinner
+  const [loading, setLoading] = useState(false); 
   const [toast, setToast] = useState<{ message: string; type?: "success" | "error" }>({
     message: "",
     type: "success",
@@ -39,7 +39,7 @@ function SingleProductPage() {
   interface Bid {
     bidId: number;
     bidAmount: number;
-    bidTime: string; // or Date if your API returns a proper Date object
+    bidTime: string;
   }
   
 
