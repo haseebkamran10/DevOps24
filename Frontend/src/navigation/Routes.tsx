@@ -10,6 +10,7 @@ import PaymentPage from "@/views/PaymentPage/PaymentPage";
 import WinnerPage from "@/views/WinnerPage/WinnerPage";
 import NewAuctionPage from "@/views/newAuctionPage";
 import SignupPage from "@/views/SignupPage/SignupPage";
+import StripePaymentPage from "@/views/PaymentPage/StripePaymentPage";
 
 export const routes: RouteObject[] = [
   {
@@ -35,6 +36,10 @@ export const routes: RouteObject[] = [
       {
         path: "SingleProductPage",
         element: <LionPainting />,
+      },
+      {
+        path: "StripePaymentPage",
+        element: <StripePaymentPage/>,
       },
       {
         path: "login",
