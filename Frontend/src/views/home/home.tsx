@@ -173,7 +173,7 @@ const HomePage = () => {
                 <div className="p-4 bg-gray-800">
                   <h3 className="font-bold truncate">{art.name}</h3>
                   <p className="text-sm truncate">{art.artist}</p>
-                  <Link to={art.link}>
+                  <Link to="/SingleProductPage">
                     <button className="mt-2 bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded text-xs">
                       View Details
                     </button>
